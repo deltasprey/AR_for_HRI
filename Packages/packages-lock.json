@@ -1,23 +1,5 @@
 {
   "dependencies": {
-    "com.microsoft.azure.spatial-anchors-sdk.core": {
-      "version": "file:MixedReality/com.microsoft.azure.spatial-anchors-sdk.core-2.13.3.tgz",
-      "depth": 0,
-      "source": "local-tarball",
-      "dependencies": {
-        "com.unity.subsystemregistration": "1.0.6",
-        "com.unity.xr.arsubsystems": "4.0.8",
-        "com.unity.xr.arfoundation": "4.0.12"
-      }
-    },
-    "com.microsoft.azure.spatial-anchors-sdk.windows": {
-      "version": "file:MixedReality/com.microsoft.azure.spatial-anchors-sdk.windows-2.13.3.tgz",
-      "depth": 0,
-      "source": "local-tarball",
-      "dependencies": {
-        "com.microsoft.azure.spatial-anchors-sdk.core": "2.13.3"
-      }
-    },
     "com.microsoft.mixedreality.openxr": {
       "version": "file:MixedReality/com.microsoft.mixedreality.openxr-1.7.2.tgz",
       "depth": 0,
@@ -60,27 +42,6 @@
       "dependencies": {
         "com.microsoft.mixedreality.toolkit.foundation": "2.8.3"
       }
-    },
-    "com.microsoft.mixedreality.wlt.asa": {
-      "version": "file:MixedReality/com.microsoft.mixedreality.wlt.asa-1.5.9.tgz",
-      "depth": 0,
-      "source": "local-tarball",
-      "dependencies": {
-        "com.microsoft.azure.spatial-anchors-sdk.core": "2.11.0",
-        "com.microsoft.mixedreality.worldlockingtools": "1.5.9"
-      }
-    },
-    "com.microsoft.mixedreality.worldlockingtools": {
-      "version": "file:MixedReality/com.microsoft.mixedreality.worldlockingtools-1.5.9.tgz",
-      "depth": 0,
-      "source": "local-tarball",
-      "dependencies": {}
-    },
-    "com.microsoft.ros_mrtk_native": {
-      "version": "file:C:/Users/Torsten Sprey/Desktop/Other/Unity/Unity Packages/ros_msft_mrtk_native-foxy/upm/com.microsoft.ros_mrtk_native",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
     },
     "com.microsoft.spatialaudio.spatializer.unity": {
       "version": "file:MixedReality/com.microsoft.spatialaudio.spatializer.unity-2.0.37.tgz",
@@ -300,7 +261,7 @@
     },
     "com.unity.xr.arsubsystems": {
       "version": "4.2.7",
-      "depth": 1,
+      "depth": 2,
       "source": "registry",
       "dependencies": {
         "com.unity.subsystemregistration": "1.1.0",

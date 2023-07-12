@@ -1,15 +1,10 @@
 {
   "dependencies": {
-    "com.microsoft.azure.spatial-anchors-sdk.core": "file:MixedReality/com.microsoft.azure.spatial-anchors-sdk.core-2.13.3.tgz",
-    "com.microsoft.azure.spatial-anchors-sdk.windows": "file:MixedReality/com.microsoft.azure.spatial-anchors-sdk.windows-2.13.3.tgz",
     "com.microsoft.mixedreality.openxr": "file:MixedReality/com.microsoft.mixedreality.openxr-1.7.2.tgz",
     "com.microsoft.mixedreality.toolkit.extensions": "file:MixedReality/com.microsoft.mixedreality.toolkit.extensions-2.8.3.tgz",
     "com.microsoft.mixedreality.toolkit.foundation": "file:MixedReality/com.microsoft.mixedreality.toolkit.foundation-2.8.3.tgz",
     "com.microsoft.mixedreality.toolkit.standardassets": "file:MixedReality/com.microsoft.mixedreality.toolkit.standardassets-2.8.3.tgz",
     "com.microsoft.mixedreality.toolkit.tools": "file:MixedReality/com.microsoft.mixedreality.toolkit.tools-2.8.3.tgz",
-    "com.microsoft.mixedreality.wlt.asa": "file:MixedReality/com.microsoft.mixedreality.wlt.asa-1.5.9.tgz",
-    "com.microsoft.mixedreality.worldlockingtools": "file:MixedReality/com.microsoft.mixedreality.worldlockingtools-1.5.9.tgz",
-    "com.microsoft.ros_mrtk_native": "file:C:/Users/Torsten Sprey/Desktop/Other/Unity/Unity Packages/ros_msft_mrtk_native-foxy/upm/com.microsoft.ros_mrtk_native",
     "com.microsoft.spatialaudio.spatializer.unity": "file:MixedReality/com.microsoft.spatialaudio.spatializer.unity-2.0.37.tgz",
     "com.unity.collab-proxy": "1.17.7",
     "com.unity.feature.development": "1.0.1",
