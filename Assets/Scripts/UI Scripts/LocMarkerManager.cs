@@ -2,8 +2,8 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Input;
 
 public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     public GameObject simpleGUI, complexGUI;
@@ -15,15 +15,20 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     public TMP_InputField moveX, moveY, moveZ, rotX, rotY, rotZ;
     public Button simpleSaveButton, complexSaveButton;
 
-    Transform player;
+    Transform player, origParent;
+    TurtleControl rosPose;
+    Vector3 offset;
     readonly float[] moveAmounts = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.5f };
     readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
-    float moveAmount, localiserScale;
+    float moveAmount, localiserScale, offsetTheta;
     uint rotateAmount;
     bool track = false, trackScale = true;
 
     void Start() {
         player = Camera.main.transform;
+        origParent = transform.parent;
+        rosPose = FindObjectOfType<TurtleControl>();
+        Invoke(nameof(markerMoved), 1);
 
         localiserScale = localiser.localScale.x * 100;
         simpleSlider.value = localiserScale;
@@ -64,14 +69,16 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         complexGUI.transform.forward *= -1;
     }
 
-    private void OnEnable() {
+    void OnEnable() {
         CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
+        TurtleControl.msgValueChanged += moveMarker;
     }
 
-    private void OnDisable() {
+    void OnDisable() {
         try {
             CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this);
         } catch { }
+        TurtleControl.msgValueChanged -= moveMarker;
     }
 
     void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
@@ -80,6 +87,22 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         } else if (eventData.Command.Keyword.ToLower() == "lock marker") {
             track = false;
         }
+    }
+
+    void moveMarker(float x, float z, float theta) {
+        localiser.SetParent(null);
+        origParent.SetParent(localiser);
+        Vector3 position = new(x + offset.x, offset.y, z + offset.z);
+        Quaternion rotation = Quaternion.Euler(90, 0, theta * Mathf.Rad2Deg - 90 + offsetTheta);
+        localiser.SetPositionAndRotation(position, rotation);
+        origParent.SetParent(null);
+        localiser.SetParent(origParent);
+    }
+
+    public void markerMoved() {
+        var (x, z, theta) = rosPose.initPos();
+        offset = new(localiser.position.x - x, localiser.position.y, localiser.position.z - z);
+        offsetTheta = localiser.rotation.z - theta;
     }
 
     public void viewSphere() {
@@ -160,98 +183,115 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     public void changeMoveX() {
         if (rotX.isFocused && float.TryParse(moveX.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float xShift)) {
             localiser.position = new Vector3(worldMarker.position.x + xShift, localiser.position.y, localiser.position.z);
+            markerMoved();
         }
     }
 
     public void moveXPlus() {
         localiser.Translate(Vector3.right * moveAmount);
         moveX.text = (localiser.position.x - worldMarker.position.x).ToString();
+        markerMoved();
     }
 
     public void moveXMinus() {
         localiser.Translate(Vector3.left * moveAmount);
         moveX.text = (localiser.position.x - worldMarker.position.x).ToString();
+        markerMoved();
     }
 
     public void changeMoveY() {
         if (rotY.isFocused && float.TryParse(moveY.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float yShift)) {
             localiser.position = new Vector3(localiser.position.x, worldMarker.position.y + yShift, localiser.position.z);
+            markerMoved();
         }
     }
 
     public void moveYPlus() {
         localiser.Translate(Vector3.up * moveAmount);
         moveY.text = (localiser.position.y - worldMarker.position.y).ToString();
+        markerMoved();
     }
 
     public void moveYMinus() {
         localiser.Translate(Vector3.down * moveAmount);
         moveY.text = (localiser.position.y - worldMarker.position.y).ToString();
+        markerMoved();
     }
 
     public void changeMoveZ() {
         if (rotZ.isFocused && float.TryParse(moveZ.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float zShift)) {
             localiser.position = new Vector3(localiser.position.x, localiser.position.y, worldMarker.position.z + zShift);
+            markerMoved();
         }
     }
 
     public void moveZPlus() {
         localiser.Translate(Vector3.forward * moveAmount);
         moveZ.text = (localiser.position.z - worldMarker.position.z).ToString();
+        markerMoved();
     }
 
     public void moveZMinus() {
         localiser.Translate(Vector3.back * moveAmount);
         moveZ.text = (localiser.position.z - worldMarker.position.z).ToString();
+        markerMoved();
     }
 
     public void changeRotateX() {
         if (float.TryParse(rotX.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float xShift)) {
             localiser.rotation = Quaternion.Euler(xShift, localiser.eulerAngles.y, localiser.eulerAngles.z);
+            markerMoved();
         }
     }
 
     public void rotateXPlus() {
         localiser.Rotate(Vector3.right * rotateAmount);
         rotX.text = localiser.eulerAngles.x.ToString("F3");
-        
+        markerMoved();
     }
 
     public void rotateXMinus() {
         localiser.Rotate(Vector3.left * rotateAmount);
         rotX.text = localiser.eulerAngles.x.ToString("F3");
+        markerMoved();
     }
 
     public void changeRotateY() {
         if (float.TryParse(rotY.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float yShift)) {
             localiser.rotation = Quaternion.Euler(localiser.eulerAngles.x, worldMarker.eulerAngles.y + yShift, localiser.eulerAngles.z);
+            markerMoved();
         }
     }
 
     public void rotateYPlus() {
         localiser.Rotate(Vector3.up * rotateAmount);
         rotY.text = (localiser.eulerAngles.y - worldMarker.eulerAngles.y).ToString("F3");
+        markerMoved();
     }
 
     public void rotateYMinus() {
         localiser.Rotate(Vector3.down * rotateAmount);
         rotY.text = (localiser.eulerAngles.y - worldMarker.eulerAngles.y).ToString("F3");
+        markerMoved();
     }
 
     public void changeRotateZ() {
         if (float.TryParse(rotZ.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float zShift)) {
             localiser.rotation = Quaternion.Euler(localiser.eulerAngles.x, localiser.eulerAngles.y, zShift);
+            markerMoved();
         }
     }
 
     public void rotateZPlus() {
         localiser.Rotate(Vector3.forward * rotateAmount);
         rotZ.text = localiser.eulerAngles.z.ToString("F3");
+        markerMoved();
     }
 
     public void rotateZMinus() {
         localiser.Rotate(Vector3.back * rotateAmount);
         rotZ.text = localiser.eulerAngles.z.ToString("F3");
+        markerMoved();
     }
 
     public void save() {
@@ -283,6 +323,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
             rotX.text = localiser.eulerAngles.x.ToString();
             rotY.text = (localiser.eulerAngles.y - worldMarker.eulerAngles.y).ToString();
             rotZ.text = localiser.eulerAngles.z.ToString();
+            markerMoved();
         }
     }
 

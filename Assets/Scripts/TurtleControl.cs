@@ -7,20 +7,24 @@ public class TurtleControl : MonoBehaviour {
     public Transform turtleBot;
     public string turtlebotCommandTopic = "/turtle1/cmd_vel", turtlebotSubscribeTopic = "/turtle1/pose";
     public float linearSpeed = 1f, turnSpeed = 1f;
+    public delegate void MsgReceived(float x, float z, float theta);
+    public static event MsgReceived msgValueChanged;
 
-    private float forwardSpeed = 0, strafeSpeed = 0, angularSpeed = 0, x = 0, z = 0, theta = 0;
-    private bool isGrabbed = false, initialised = false, offsetted = false;
-    private Twist twistMessage;
-    private RosSocket rosSocket;
-    private UnityEngine.Vector3 offset, position;
+    float x = 0, z = 0, theta = 0;
+    float oldX, oldZ, oldTheta;
+    float forwardSpeed = 0, strafeSpeed = 0, angularSpeed = 0;
+    bool isGrabbed = false, initialised = false, offsetted = false;
+    Twist twistMessage;
+    RosSocket rosSocket;
+    UnityEngine.Vector3 offset, position;
 
-    private void Start() {
+    void Start() {
         rosSocket = GetComponent<RosConnector>().RosSocket;
         rosSocket.Subscribe<TurtlePose>(turtlebotSubscribeTopic, poseCallback);
         twistMessage = new Twist();
     }
 
-    private void Update() {
+    void Update() {
         // Detect joystick input
         if (joystick.isGrabbed) {
             forwardSpeed = joystick.rotation.x * linearSpeed;
@@ -48,17 +52,26 @@ public class TurtleControl : MonoBehaviour {
 
         // Update the pose of the turtlebot in Unity
         if (initialised && offsetted) {
-            position = new(x + offset.x, offset.y, z + offset.z);
-            UnityEngine.Quaternion rotation = UnityEngine.Quaternion.Euler(90, 0, theta * Mathf.Rad2Deg - 90);
-            //Debug.Log($"{position.x}, {position.y}, {position.z}");
-            turtleBot.SetPositionAndRotation(position, rotation);
+            if (x != oldX || z != oldZ || theta != oldTheta) {
+                msgValueChanged?.Invoke(x, z, theta);
+                position = new(x + offset.x, offset.y, z + offset.z);
+                UnityEngine.Quaternion rotation = UnityEngine.Quaternion.Euler(90, 0, theta * Mathf.Rad2Deg - 90);
+                turtleBot.SetPositionAndRotation(position, rotation);
+                oldX = x;
+                oldZ = z;
+                oldTheta = theta;
+                //Debug.Log($"{position.x}, {position.y}, {position.z}");
+            }
         } else if (initialised) {
             offset = new(turtleBot.position.x - x, turtleBot.position.y, turtleBot.position.z - z);
+            oldX = x;
+            oldZ = z;
+            oldTheta = theta;
             offsetted = true;
         }
     }
 
-    private void poseCallback(TurtlePose msg) {
+    void poseCallback(TurtlePose msg) {
         //Debug.Log($"{msg.x}, {msg.y}, {msg.theta}, {msg.linear_velocity}, {msg.angular_velocity}");
         //print(initialised);
         x = msg.x;
@@ -68,6 +81,8 @@ public class TurtleControl : MonoBehaviour {
             initialised = true;
         }
     }
+
+    public (float x, float z, float theta) initPos() { return (x, z, theta); }
 
     public void forwardPress() {
         forwardSpeed += linearSpeed;
