@@ -1,6 +1,7 @@
 using UnityEngine;
 using RosSharp.RosBridgeClient;
 using RosSharp.RosBridgeClient.Messages.Geometry;
+using System.Collections;
 
 public class TurtleControl : MonoBehaviour {
     public JoystickControl joystick;
@@ -13,61 +14,66 @@ public class TurtleControl : MonoBehaviour {
     float x = 0, z = 0, theta = 0;
     float oldX, oldZ, oldTheta;
     float forwardSpeed = 0, strafeSpeed = 0, angularSpeed = 0;
-    bool isGrabbed = false, initialised = false, offsetted = false;
+    bool isGrabbed = false, initialised = false, offsetted = false, stop = true;
     Twist twistMessage;
     RosSocket rosSocket;
     UnityEngine.Vector3 offset, position;
 
     void Start() {
+        SafetyZone.stop += stopCmds;
+        SafetyZone.restart += restartCmds;
+
         rosSocket = GetComponent<RosConnector>().RosSocket;
         rosSocket.Subscribe<TurtlePose>(turtlebotSubscribeTopic, poseCallback);
         twistMessage = new Twist();
     }
 
     void Update() {
-        // Detect joystick input
-        if (joystick.isGrabbed) {
-            forwardSpeed = joystick.rotation.x * linearSpeed;
-            angularSpeed = joystick.rotation.y * turnSpeed;
-            isGrabbed = true;
-        } else if (isGrabbed) {
-            forwardSpeed = 0;
-            angularSpeed = 0;
-            isGrabbed = false;
-        }
+        if (!stop) {
+            // Detect joystick input
+            if (joystick.isGrabbed) {
+                forwardSpeed = joystick.rotation.x * linearSpeed;
+                angularSpeed = joystick.rotation.y * turnSpeed;
+                isGrabbed = true;
+            } else if (isGrabbed) {
+                forwardSpeed = 0;
+                angularSpeed = 0;
+                isGrabbed = false;
+            }
 
-        // Detect keyboard input
-        //if (Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0) {
-        //    forwardSpeed = Input.GetAxis("Vertical") * linearSpeed;
-        //    angularSpeed = Input.GetAxis("Horizontal") * turnSpeed;
-        //}
+            // Detect keyboard input
+            //if (Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0) {
+            //    forwardSpeed = Input.GetAxis("Vertical") * linearSpeed;
+            //    angularSpeed = Input.GetAxis("Horizontal") * turnSpeed;
+            //}
 
-        // Set linear and angular velocities in Twist message
-        twistMessage.linear.x = forwardSpeed;
-        twistMessage.linear.y = -strafeSpeed;
-        twistMessage.angular.z = -angularSpeed;
+            // Set linear and angular velocities in Twist message
+            twistMessage.linear.x = forwardSpeed;
+            twistMessage.linear.y = -strafeSpeed;
+            twistMessage.angular.z = -angularSpeed;
 
-        // Publish the Twist message to control the Turtlebot
-        rosSocket.Publish(turtlebotCommandTopic, twistMessage);
+            // Publish the Twist message to control the Turtlebot
+            rosSocket.Publish(turtlebotCommandTopic, twistMessage);
 
-        // Update the pose of the turtlebot in Unity
-        if (initialised && offsetted) {
-            if (x != oldX || z != oldZ || theta != oldTheta) {
-                msgValueChanged?.Invoke(x, z, theta);
-                position = new(x + offset.x, offset.y, z + offset.z);
-                UnityEngine.Quaternion rotation = UnityEngine.Quaternion.Euler(90, 0, theta * Mathf.Rad2Deg - 90);
-                turtleBot.SetPositionAndRotation(position, rotation);
+            // Update the pose of the turtlebot in Unity
+            if (initialised && offsetted) {
+                if (x != oldX || z != oldZ || theta != oldTheta) {
+                    msgValueChanged?.Invoke(x, z, theta);
+                    position = new(x + offset.x, offset.y, z + offset.z);
+                    UnityEngine.Quaternion rotation = UnityEngine.Quaternion.Euler(90, 0, theta * Mathf.Rad2Deg - 90);
+                    turtleBot.SetPositionAndRotation(position, rotation);
+                    oldX = x;
+                    oldZ = z;
+                    oldTheta = theta;
+                    //Debug.Log($"{position.x}, {position.y}, {position.z}");
+                }
+            } else if (initialised) {
+                offset = new(turtleBot.position.x - x, turtleBot.position.y, turtleBot.position.z - z);
                 oldX = x;
                 oldZ = z;
                 oldTheta = theta;
-                //Debug.Log($"{position.x}, {position.y}, {position.z}");
+                offsetted = true;
             }
-        } else if (initialised) {
-            offset = new(turtleBot.position.x - x, turtleBot.position.y, turtleBot.position.z - z);
-            oldX = x;
-            oldZ = z;
-            oldTheta = theta;
-            offsetted = true;
         }
     }
 
@@ -79,6 +85,25 @@ public class TurtleControl : MonoBehaviour {
         theta = msg.theta;
         if (!initialised) {
             initialised = true;
+        }
+    }
+
+    void stopCmds() {
+        StartCoroutine(floodPublish());
+        stop = true;
+    }
+
+    void restartCmds() {
+        StopAllCoroutines();
+        stop = false;
+    }
+
+    IEnumerator floodPublish() {
+        while (true) {
+            twistMessage.linear = new RosSharp.RosBridgeClient.Messages.Geometry.Vector3();
+            twistMessage.angular = new RosSharp.RosBridgeClient.Messages.Geometry.Vector3();
+            rosSocket.Publish(turtlebotCommandTopic, twistMessage);
+            yield return null;
         }
     }
 

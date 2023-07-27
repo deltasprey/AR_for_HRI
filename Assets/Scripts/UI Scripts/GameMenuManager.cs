@@ -55,10 +55,8 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
     }
 
     void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
-        switch (eventData.Command.Keyword.ToLower()) {
-            case "menu":
-                toggleMenu();
-                break;
+        if (eventData.Command.Keyword.ToLower() == "menu") {
+            toggleMenu();
         }
     }
 }

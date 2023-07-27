@@ -101,14 +101,15 @@ public class Outline : MonoBehaviour {
 
   void OnEnable() {
     foreach (var renderer in renderers) {
+      if (!renderer.gameObject.CompareTag("OutlineIgnore")) {
+        // Append outline shaders
+        var materials = renderer.sharedMaterials.ToList();
 
-      // Append outline shaders
-      var materials = renderer.sharedMaterials.ToList();
+        materials.Add(outlineMaskMaterial);
+        materials.Add(outlineFillMaterial);
 
-      materials.Add(outlineMaskMaterial);
-      materials.Add(outlineFillMaterial);
-
-      renderer.materials = materials.ToArray();
+        renderer.materials = materials.ToArray();
+      }
     }
   }
 
@@ -139,14 +140,15 @@ public class Outline : MonoBehaviour {
 
   void OnDisable() {
     foreach (var renderer in renderers) {
+      if (!renderer.gameObject.CompareTag("OutlineIgnore")) {
+        // Remove outline shaders
+        var materials = renderer.sharedMaterials.ToList();
 
-      // Remove outline shaders
-      var materials = renderer.sharedMaterials.ToList();
+        materials.Remove(outlineMaskMaterial);
+        materials.Remove(outlineFillMaterial);
 
-      materials.Remove(outlineMaskMaterial);
-      materials.Remove(outlineFillMaterial);
-
-      renderer.materials = materials.ToArray();
+        renderer.materials = materials.ToArray();
+      }
     }
   }
 
@@ -163,17 +165,18 @@ public class Outline : MonoBehaviour {
     var bakedMeshes = new HashSet<Mesh>();
 
     foreach (var meshFilter in GetComponentsInChildren<MeshFilter>()) {
+      if (!meshFilter.gameObject.CompareTag("OutlineIgnore")) {
+        // Skip duplicates
+        if (!bakedMeshes.Add(meshFilter.sharedMesh)) {
+          continue;
+        }
 
-      // Skip duplicates
-      if (!bakedMeshes.Add(meshFilter.sharedMesh)) {
-        continue;
+        // Serialize smooth normals
+        var smoothNormals = SmoothNormals(meshFilter.sharedMesh);
+
+        bakeKeys.Add(meshFilter.sharedMesh);
+        bakeValues.Add(new ListVector3() { data = smoothNormals });
       }
-
-      // Serialize smooth normals
-      var smoothNormals = SmoothNormals(meshFilter.sharedMesh);
-
-      bakeKeys.Add(meshFilter.sharedMesh);
-      bakeValues.Add(new ListVector3() { data = smoothNormals });
     }
   }
 
@@ -181,40 +184,42 @@ public class Outline : MonoBehaviour {
 
     // Retrieve or generate smooth normals
     foreach (var meshFilter in GetComponentsInChildren<MeshFilter>()) {
+      if (!meshFilter.gameObject.CompareTag("OutlineIgnore")) {
+        // Skip if smooth normals have already been adopted
+        if (!registeredMeshes.Add(meshFilter.sharedMesh)) {
+          continue;
+        }
 
-      // Skip if smooth normals have already been adopted
-      if (!registeredMeshes.Add(meshFilter.sharedMesh)) {
-        continue;
-      }
+        // Retrieve or generate smooth normals
+        var index = bakeKeys.IndexOf(meshFilter.sharedMesh);
+        var smoothNormals = (index >= 0) ? bakeValues[index].data : SmoothNormals(meshFilter.sharedMesh);
 
-      // Retrieve or generate smooth normals
-      var index = bakeKeys.IndexOf(meshFilter.sharedMesh);
-      var smoothNormals = (index >= 0) ? bakeValues[index].data : SmoothNormals(meshFilter.sharedMesh);
+        // Store smooth normals in UV3
+        meshFilter.sharedMesh.SetUVs(3, smoothNormals);
 
-      // Store smooth normals in UV3
-      meshFilter.sharedMesh.SetUVs(3, smoothNormals);
+        // Combine submeshes
+        var renderer = meshFilter.GetComponent<Renderer>();
 
-      // Combine submeshes
-      var renderer = meshFilter.GetComponent<Renderer>();
-
-      if (renderer != null) {
-        CombineSubmeshes(meshFilter.sharedMesh, renderer.sharedMaterials);
+        if (renderer != null) {
+          CombineSubmeshes(meshFilter.sharedMesh, renderer.sharedMaterials);
+        }
       }
     }
 
     // Clear UV3 on skinned mesh renderers
     foreach (var skinnedMeshRenderer in GetComponentsInChildren<SkinnedMeshRenderer>()) {
+      if (!skinnedMeshRenderer.gameObject.CompareTag("OutlineIgnore")) {
+        // Skip if UV3 has already been reset
+        if (!registeredMeshes.Add(skinnedMeshRenderer.sharedMesh)) {
+          continue;
+        }
 
-      // Skip if UV3 has already been reset
-      if (!registeredMeshes.Add(skinnedMeshRenderer.sharedMesh)) {
-        continue;
+        // Clear UV3
+        skinnedMeshRenderer.sharedMesh.uv4 = new Vector2[skinnedMeshRenderer.sharedMesh.vertexCount];
+
+        // Combine submeshes
+        CombineSubmeshes(skinnedMeshRenderer.sharedMesh, skinnedMeshRenderer.sharedMaterials);
       }
-
-      // Clear UV3
-      skinnedMeshRenderer.sharedMesh.uv4 = new Vector2[skinnedMeshRenderer.sharedMesh.vertexCount];
-
-      // Combine submeshes
-      CombineSubmeshes(skinnedMeshRenderer.sharedMesh, skinnedMeshRenderer.sharedMaterials);
     }
   }
 

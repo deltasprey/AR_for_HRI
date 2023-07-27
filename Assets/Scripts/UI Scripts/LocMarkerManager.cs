@@ -8,9 +8,9 @@ using Microsoft.MixedReality.Toolkit.Input;
 public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     public GameObject simpleGUI, complexGUI;
     public Material sphere;
-    public Transform localiser, worldMarker;
-    public Slider simpleSlider, complexSlider;
-    public TextMeshProUGUI simpleSliderText, complexSliderText;
+    public Transform localiser, worldMarker, safetyZone;
+    public Slider simpleScaleSlider, complexScaleSlider, simpleSafetySlider, complexSafetySlider;
+    public TextMeshProUGUI simpleScaleSliderText, complexScaleSliderText, simpleSafetySliderText, complexSafetySliderText;
     public TMP_Dropdown moveStep, rotateStep;
     public TMP_InputField moveX, moveY, moveZ, rotX, rotY, rotZ;
     public Button simpleSaveButton, complexSaveButton;
@@ -20,7 +20,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     Vector3 offset;
     readonly float[] moveAmounts = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.5f };
     readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
-    float moveAmount, localiserScale, offsetTheta;
+    float moveAmount, localiserScale, safetyScale, offsetTheta;
     uint rotateAmount;
     bool track = false, trackScale = true;
 
@@ -31,10 +31,17 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         Invoke(nameof(markerMoved), 1);
 
         localiserScale = localiser.localScale.x * 100;
-        simpleSlider.value = localiserScale;
-        complexSlider.value = localiserScale;
-        simpleSliderText.text = simpleSlider.value.ToString();
-        complexSliderText.text = complexSlider.value.ToString();
+        simpleScaleSlider.value = localiserScale;
+        complexScaleSlider.value = localiserScale;
+        simpleScaleSliderText.text = simpleScaleSlider.value.ToString();
+        complexScaleSliderText.text = complexScaleSlider.value.ToString();
+
+        safetyScale = safetyZone.localScale.x * localiserScale/100;
+        simpleSafetySlider.value = safetyScale * 10;
+        complexSafetySlider.value = safetyScale * 10;
+        simpleSafetySliderText.text = safetyScale.ToString();
+        complexSafetySliderText.text = safetyScale.ToString();
+
         moveAmount = moveAmounts[moveStep.value];
         rotateAmount = rotateAmounts[rotateStep.value];
         StartCoroutine(alphaUp());
@@ -42,10 +49,15 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
     void Update() {
         if (localiser.localScale.x * 100 != localiserScale && trackScale) {
-            simpleSlider.value = localiserScale;
-            complexSlider.value = localiserScale;
-            simpleSliderText.text = simpleSlider.value.ToString();
-            complexSliderText.text = complexSlider.value.ToString();
+            simpleScaleSlider.value = localiserScale;
+            complexScaleSlider.value = localiserScale;
+            simpleScaleSliderText.text = simpleScaleSlider.value.ToString();
+            complexScaleSliderText.text = complexScaleSlider.value.ToString();
+
+            simpleSafetySlider.value = safetyScale * 10;
+            complexSafetySlider.value = safetyScale * 10;
+            simpleSafetySliderText.text = safetyScale.ToString();
+            complexSafetySliderText.text = safetyScale.ToString();
         }
         
         if (track) {
@@ -121,18 +133,30 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     }
 
     public void adjustScale() {
-        float newScale;
         if (simpleGUI.activeSelf) {
-            newScale = simpleSlider.value/100;
-            complexSlider.value = simpleSlider.value;
+            localiserScale = simpleScaleSlider.value;
+            complexScaleSlider.value = simpleScaleSlider.value;
         } else {
-            newScale = complexSlider.value/100;
-            simpleSlider.value = complexSlider.value;
+            localiserScale = complexScaleSlider.value;
+            simpleScaleSlider.value = complexScaleSlider.value;
         }
-        localiser.localScale = Vector3.one * newScale;
-        simpleSliderText.text = simpleSlider.value.ToString();
-        complexSliderText.text = complexSlider.value.ToString();
-        localiserScale = newScale * 100;
+        localiser.localScale = Vector3.one * localiserScale/100;
+        simpleScaleSliderText.text = localiserScale.ToString();
+        complexScaleSliderText.text = localiserScale.ToString();
+        adjustSafety();
+    }
+
+    public void adjustSafety() {
+        if (simpleGUI.activeSelf) {
+            safetyScale = simpleSafetySlider.value/10;
+            complexSafetySlider.value = simpleSafetySlider.value;
+        } else {
+            safetyScale = complexSafetySlider.value/10;
+            simpleSafetySlider.value = complexSafetySlider.value;
+        }
+        safetyZone.localScale = Vector3.one * safetyScale/localiserScale * 100;
+        simpleSafetySliderText.text = safetyScale.ToString();
+        complexSafetySliderText.text = safetyScale.ToString();
     }
 
     public void sliderSelect() { trackScale = false; }
