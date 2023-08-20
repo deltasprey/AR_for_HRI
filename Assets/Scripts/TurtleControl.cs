@@ -19,7 +19,7 @@ public class TurtleControl : MonoBehaviour {
     RosSocket rosSocket;
     UnityEngine.Vector3 offset, position;
 
-    void Start() {
+    private void Start() {
         SafetyZone.stop += stopCmds;
         SafetyZone.restart += restartCmds;
 
@@ -28,7 +28,7 @@ public class TurtleControl : MonoBehaviour {
         twistMessage = new Twist();
     }
 
-    void Update() {
+    private void Update() {
         if (!stop) {
             // Detect joystick input
             if (joystick.isGrabbed) {
@@ -99,11 +99,13 @@ public class TurtleControl : MonoBehaviour {
     }
 
     IEnumerator floodPublish() {
+        Twist floodTwistMessage = new() {
+            linear = new RosSharp.RosBridgeClient.Messages.Geometry.Vector3(),
+            angular = new RosSharp.RosBridgeClient.Messages.Geometry.Vector3()
+        };
         while (true) {
-            twistMessage.linear = new RosSharp.RosBridgeClient.Messages.Geometry.Vector3();
-            twistMessage.angular = new RosSharp.RosBridgeClient.Messages.Geometry.Vector3();
-            rosSocket.Publish(turtlebotCommandTopic, twistMessage);
-            yield return null;
+            rosSocket.Publish(turtlebotCommandTopic, floodTwistMessage);
+            yield return new WaitForSeconds(0.02f);
         }
     }
 

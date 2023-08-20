@@ -9,12 +9,12 @@ public class JoystickControl : MonoBehaviour {
     private Vector3 topPos, topRot;
     private float x, y;
 
-    void Start() {
+    private void Start() {
         topPos = new(Top.localPosition.x, Top.localPosition.y, Top.localPosition.z);
         topRot = new(Top.localEulerAngles.x, Top.localEulerAngles.y, Top.localEulerAngles.z);
     }
 
-    void Update() {
+    private void Update() {
         if (isGrabbed) {
             x = 0; y = 0;
             if (Mathf.Abs(Base.localRotation.x) > deadZone) {

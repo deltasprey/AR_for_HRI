@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
+using Unity.VisualScripting;
 
 public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     public GameObject simpleGUI, complexGUI;
@@ -18,6 +19,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     Transform player, origParent;
     TurtleControl rosPose;
     Vector3 offset;
+    QRTracking.QRCode qr;
     readonly float[] moveAmounts = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.5f };
     readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
     float moveAmount, localiserScale, safetyScale, offsetTheta;
@@ -28,6 +30,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         player = Camera.main.transform;
         origParent = transform.parent;
         rosPose = FindObjectOfType<TurtleControl>();
+        //print(rosPose.linearSpeed);
         Invoke(nameof(markerMoved), 1);
 
         localiserScale = localiser.localScale.x * 100;
@@ -45,6 +48,16 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         moveAmount = moveAmounts[moveStep.value];
         rotateAmount = rotateAmounts[rotateStep.value];
         StartCoroutine(alphaUp());
+
+        qr = GetComponentInParent<QRTracking.QRCode>();
+        print(qr.CodeText);
+        if (qr.CodeText[0] == '(' && qr.CodeText[qr.CodeText.Length - 1] == ')') {
+            if (qr.CodeText.CountIndices(',') == 2) {
+                print("Offset");
+            } else if (qr.CodeText.CountIndices(',') == 5) {
+                print("Offset and rotation");
+            }
+        } 
     }
 
     void Update() {

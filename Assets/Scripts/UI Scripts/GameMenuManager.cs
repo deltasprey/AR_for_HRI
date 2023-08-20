@@ -26,14 +26,16 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
         CoreServices.SpatialAwarenessSystem.Disable();
     }
 
-    void Update() {
+    private void Update() {
         if (Input.GetKeyDown(KeyCode.M)) {
             toggleMenu();
         }
-        menu.transform.LookAt(new Vector3(player.position.x, player.position.y, player.position.z));
-        menu.transform.forward *= -1;
-        if (follow) {
-            menu.transform.position = player.position + new Vector3(player.forward.x, player.forward.y, player.forward.z).normalized * spawnDistance;
+        if (menu.activeSelf) {
+            menu.transform.LookAt(new Vector3(player.position.x, player.position.y, player.position.z));
+            menu.transform.forward *= -1;
+            if (follow) {
+                menu.transform.position = player.position + new Vector3(player.forward.x, player.forward.y, player.forward.z).normalized * spawnDistance;
+            }
         }
     }
 
@@ -57,6 +59,8 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
     void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
         if (eventData.Command.Keyword.ToLower() == "menu") {
             toggleMenu();
+        } else if (eventData.Command.Keyword.ToLower() == "navigate") {
+            CoreServices.SpatialAwarenessSystem.Enable();
         }
     }
 }

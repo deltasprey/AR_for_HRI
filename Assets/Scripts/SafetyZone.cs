@@ -14,14 +14,14 @@ public class SafetyZone : MonoBehaviour {
     Color goColor = Color.green, stopColor = Color.red;
     uint stopped = 0;
 
-    void Start() {
+    private void Start() {
         rHandObj = Instantiate(handCollider);
         lHandObj = Instantiate(handCollider);
         headObj = Instantiate(headCollider);
         restart?.Invoke();
     }
 
-    void Update() {
+    private void Update() {
         headObj.transform.position = Camera.main.transform.position;
         if (HandJointUtils.TryGetJointPose(TrackedHandJoint.MiddleKnuckle, Handedness.Right, out pose)) {
             rHandObj.transform.position = pose.Position;
@@ -30,8 +30,8 @@ public class SafetyZone : MonoBehaviour {
             lHandObj.transform.position = pose.Position;
         }
     }
-    
-    void OnTriggerEnter(Collider other) {
+
+    private void OnTriggerEnter(Collider other) {
         if (other.CompareTag("Player")) {          
             stopped++;
             if (stopped == 1) {
@@ -41,7 +41,7 @@ public class SafetyZone : MonoBehaviour {
         }
     }
 
-    void OnTriggerExit(Collider other) {
+    private void OnTriggerExit(Collider other) {
         if (stopped > 0 && other.CompareTag("Player")) {
             stopped--;
             if (stopped == 0) {

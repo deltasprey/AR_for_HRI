@@ -9,7 +9,7 @@ public class HandTracking : MonoBehaviour {
     private Renderer rThumbRend, rMiddleRend, rRingRend, rPinkyRend;
     private MixedRealityPose pose;
 
-    void Start() {
+    private void Start() {
         // Right hand
         rThumbObject = Instantiate(sphereMarker, this.transform);
         rMiddleObject = Instantiate(sphereMarker, this.transform);
@@ -21,7 +21,7 @@ public class HandTracking : MonoBehaviour {
         rPinkyRend = rPinkyObject.GetComponent<Renderer>();
     }
 
-    void Update() {
+    private void Update() {
         if (HandJointUtils.TryGetJointPose(TrackedHandJoint.ThumbTip, Handedness.Right, out pose)) {
             rThumbRend.enabled = true;
             rThumbObject.transform.position = pose.Position;

@@ -6,7 +6,8 @@ public class SliderControl : MonoBehaviour {
     public Slider slider;
     public TextMeshProUGUI text;
     public Material cube;
-    void Start() {
+
+    private void Start() {
         text.text = slider.value.ToString();
     }
 

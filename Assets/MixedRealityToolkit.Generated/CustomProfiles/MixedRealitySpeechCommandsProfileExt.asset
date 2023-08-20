@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isCustomProfile: 1
   startBehavior: 0
-  recognitionConfidenceLevel: 1
+  recognitionConfidenceLevel: 0
   speechCommands:
   - localizationKey: 
     keyword: Menu
@@ -151,6 +151,13 @@ MonoBehaviour:
       axisConstraint: 0
   - localizationKey: 
     keyword: Stop
+    keyCode: 0
+    action:
+      id: 0
+      description: None
+      axisConstraint: 0
+  - localizationKey: 
+    keyword: Navigate
     keyCode: 0
     action:
       id: 0
