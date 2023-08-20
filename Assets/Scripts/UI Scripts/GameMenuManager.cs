@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
-    public GameObject menu;
+    public GameObject menu, HUD;
     public Transform player;
     public Toggle toggle;
     public float spawnDistance = 2;
@@ -49,6 +49,10 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
     public void toggleMenuFollow() {
         follow = !follow;
+    }
+
+    public void toggleHUD() {
+        HUD.SetActive(!HUD.activeSelf);
     }
 
     void toggleMenu() {
