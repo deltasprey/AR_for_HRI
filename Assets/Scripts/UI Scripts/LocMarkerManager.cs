@@ -7,6 +7,7 @@ using Microsoft.MixedReality.Toolkit.Input;
 using Unity.VisualScripting;
 
 public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
+    public QRTracking.QRCode qr;
     public GameObject simpleGUI, complexGUI;
     public Material sphere;
     public Transform localiser, worldMarker, safetyZone;
@@ -19,7 +20,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     Transform player, origParent;
     TurtleControl rosPose;
     Vector3 offset;
-    QRTracking.QRCode qr;
+    
     readonly float[] moveAmounts = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.5f };
     readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
     float moveAmount, localiserScale, safetyScale, offsetTheta;
@@ -49,13 +50,18 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         rotateAmount = rotateAmounts[rotateStep.value];
         StartCoroutine(alphaUp());
 
-        qr = GetComponentInParent<QRTracking.QRCode>();
+        //qr = GetComponentInParent<QRTracking.QRCode>();
         print(qr.CodeText);
         if (qr.CodeText[0] == '(' && qr.CodeText[qr.CodeText.Length - 1] == ')') {
             if (qr.CodeText.CountIndices(',') == 2) {
                 print("Offset");
+                string[] codeVals = qr.CodeText.Split(',');
+                QROffset(float.Parse(codeVals[0]), float.Parse(codeVals[1]), float.Parse(codeVals[2]));
             } else if (qr.CodeText.CountIndices(',') == 5) {
                 print("Offset and rotation");
+                string[] codeVals = qr.CodeText.Split(',');
+                QROffsetRotation(float.Parse(codeVals[0]), float.Parse(codeVals[1]), float.Parse(codeVals[2]),
+                                 float.Parse(codeVals[3]), float.Parse(codeVals[4]), float.Parse(codeVals[5]));
             }
         } 
     }
@@ -112,6 +118,15 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         } else if (eventData.Command.Keyword.ToLower() == "lock marker") {
             track = false;
         }
+    }
+
+    void QROffset(float x, float y, float z) {
+        localiser.position = new Vector3(worldMarker.position.x + x, worldMarker.position.y + y, worldMarker.position.z + z);
+    }
+
+    void QROffsetRotation(float x, float y, float z, float rx, float ry, float rz) {
+        localiser.position = new Vector3(worldMarker.position.x + x, worldMarker.position.y + y, worldMarker.position.z + z);
+        localiser.rotation = Quaternion.Euler(rx, ry, rz);
     }
 
     void moveMarker(float x, float z, float theta) {

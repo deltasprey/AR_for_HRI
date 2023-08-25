@@ -11,7 +11,6 @@ public class SafetyZone : MonoBehaviour {
 
     GameObject rHandObj, lHandObj, headObj;
     MixedRealityPose pose;
-    Color goColor = Color.green, stopColor = Color.red;
     uint stopped = 0;
 
     private void Start() {
@@ -36,7 +35,7 @@ public class SafetyZone : MonoBehaviour {
             stopped++;
             if (stopped == 1) {
                 stop?.Invoke();
-                zoneMat.SetColor("_Line_Color_", stopColor);
+                zoneMat.SetColor("_Line_Color_", Color.red);
             }
         }
     }
@@ -46,7 +45,7 @@ public class SafetyZone : MonoBehaviour {
             stopped--;
             if (stopped == 0) {
                 restart?.Invoke();
-                zoneMat.SetColor("_Line_Color_", goColor);
+                zoneMat.SetColor("_Line_Color_", Color.green);
             }
         }
     }

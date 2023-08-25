@@ -8,6 +8,8 @@ public class TurtleControl : MonoBehaviour {
     public Transform turtleBot;
     public string turtlebotCommandTopic = "/turtle1/cmd_vel", turtlebotSubscribeTopic = "/turtle1/pose";
     public float linearSpeed = 1f, turnSpeed = 1f;
+    public bool stopOnLoad = true;
+
     public delegate void MsgReceived(float x, float z, float theta);
     public static event MsgReceived msgValueChanged;
 
@@ -20,6 +22,7 @@ public class TurtleControl : MonoBehaviour {
     UnityEngine.Vector3 offset, position;
 
     private void Start() {
+        Invoke(nameof(setStopVar), 0.2f);
         SafetyZone.stop += stopCmds;
         SafetyZone.restart += restartCmds;
 
@@ -75,6 +78,10 @@ public class TurtleControl : MonoBehaviour {
                 offsetted = true;
             }
         }
+    }
+
+    void setStopVar() {
+        stop = stopOnLoad;
     }
 
     void poseCallback(TurtlePose msg) {

@@ -20316,6 +20316,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39346beba51f8eb40a76883a0b7ddee2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  qr: {fileID: 2505368741037247470}
   simpleGUI: {fileID: 248284755209788075}
   complexGUI: {fileID: 6387568911421127723}
   sphere: {fileID: 2100000, guid: 8d9ab0be6ff07b4449f7171209165c7c, type: 2}

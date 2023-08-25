@@ -4,11 +4,13 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
-    public GameObject menu, HUD;
+    public GameObject menu, instructionText;
     public Transform player;
     public Toggle toggle;
     public float spawnDistance = 2;
     public bool follow = false;
+
+    bool navigating = false;
 
     private void OnEnable() {
         if (CoreServices.InputSystem != null) {
@@ -51,10 +53,6 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
         follow = !follow;
     }
 
-    public void toggleHUD() {
-        HUD.SetActive(!HUD.activeSelf);
-    }
-
     void toggleMenu() {
         menu.SetActive(!menu.activeSelf);
         menu.transform.position = player.position + new Vector3(player.forward.x, player.forward.y, player.forward.z).normalized * spawnDistance;
@@ -63,8 +61,16 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
     void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
         if (eventData.Command.Keyword.ToLower() == "menu") {
             toggleMenu();
-        } else if (eventData.Command.Keyword.ToLower() == "navigate") {
-            CoreServices.SpatialAwarenessSystem.Enable();
+        } else if (eventData.Command.Keyword.ToLower() == "toggle navigation") {
+            if (navigating) {
+                CoreServices.SpatialAwarenessSystem.Disable();
+                instructionText.SetActive(false);
+                navigating = false;
+            } else {
+                CoreServices.SpatialAwarenessSystem.Enable();
+                instructionText.SetActive(true);
+                navigating = true;
+            }
         }
     }
 }

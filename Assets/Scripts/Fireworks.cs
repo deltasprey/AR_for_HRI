@@ -8,9 +8,7 @@ public class Fireworks : MonoBehaviour, IMixedRealitySpeechHandler {
     public List<GameObject> fireworks = new();
 
     private void OnEnable() {
-        if (CoreServices.InputSystem != null) {
-            CoreServices.InputSystem.RegisterHandler<IMixedRealitySpeechHandler>(this);
-        }
+        CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
     }
 
     private void OnDisable() {
@@ -30,6 +28,7 @@ public class Fireworks : MonoBehaviour, IMixedRealitySpeechHandler {
     }
 
     IEnumerator explodeFireworks() {
+        print("Fireworks");
         foreach (GameObject firework in fireworks) {
             firework.GetComponent<ParticleSystem>().Play();
             firework.GetComponent<AudioSource>().Play();

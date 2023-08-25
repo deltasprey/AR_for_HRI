@@ -1,10 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
 
-[RequireComponent(typeof(TextMeshPro))]
+//[RequireComponent(typeof(TMP_Text))]
 public class DebugLogPanel : MonoBehaviour
 {
     [Header("Visual Feedback")]
@@ -30,7 +29,9 @@ public class DebugLogPanel : MonoBehaviour
 
     private bool newMessageArrived = false;
 
-    private TextMeshPro debugText;
+    private string stringColor;
+
+    private TMP_Text debugText;
 
     // The queue with the messages:
     private Queue<string> messageQueue;
@@ -41,7 +42,7 @@ public class DebugLogPanel : MonoBehaviour
     void OnEnable()
     {
         messageQueue = new Queue<string>();       
-        debugText = GetComponent<TextMeshPro>();
+        debugText = GetComponent<TMP_Text>();
         Application.logMessageReceivedThreaded += Application_logMessageReceivedThreaded;
         messageSound = this.GetComponent<AudioSource>();
     }
@@ -59,11 +60,30 @@ public class DebugLogPanel : MonoBehaviour
 
             newMessageArrived = true;
 
-            StringBuilder stringBuilder = new StringBuilder();
+            switch (type) {
+                case LogType.Error:
+                    stringColor = "red";
+                    break;
+                case LogType.Warning:
+                    stringColor = "yellow";
+                    break;
+                case LogType.Exception:
+                    stringColor = "orange";
+                    break;
+                case LogType.Assert:
+                    stringColor = "olive";
+                    break;
+                default:
+                    stringColor = "white";
+                    break;
+            }
+
+            StringBuilder stringBuilder = new();
 
             stringBuilder.Append("\n");
-            stringBuilder.Append($"{type}: ");
+            stringBuilder.Append($"<color={stringColor}>{type}: ");
             stringBuilder.Append(condition);
+            stringBuilder.Append("</color>");
 
             if (includeStackTrace)
             {
@@ -74,7 +94,7 @@ public class DebugLogPanel : MonoBehaviour
             condition = stringBuilder.ToString();
             messageQueue.Enqueue(condition);
         
-            if (messageQueue.Count > maxNumberOfMessages)
+            if (maxNumberOfMessages > 0 && messageQueue.Count > maxNumberOfMessages)
             {
                 messageQueue.Dequeue();
             }
@@ -92,7 +112,7 @@ public class DebugLogPanel : MonoBehaviour
 
     void PrintQueue()
     {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new();
         string[] messageList = messageQueue.ToArray();
 
         for (int i = 0; i < messageList.Length; i++) {
@@ -102,6 +122,15 @@ public class DebugLogPanel : MonoBehaviour
 
         string message = stringBuilder.ToString();
         debugText.text = message;
+
+        Invoke(nameof(UpdateViewport), 0.5f);
+    }
+
+    void UpdateViewport() {
+        if (debugText.isTextOverflowing) {
+            debugText.rectTransform.sizeDelta = new Vector2(debugText.rectTransform.sizeDelta.x, debugText.rectTransform.sizeDelta.y + 14f);
+            debugText.rectTransform.localPosition = new Vector3(0, debugText.rectTransform.sizeDelta.y - 80, 0);
+        }
     }
 
     /// <summary>
