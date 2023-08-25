@@ -13,9 +13,7 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
     bool navigating = false;
 
     private void OnEnable() {
-        if (CoreServices.InputSystem != null) {
-            CoreServices.InputSystem.RegisterHandler<IMixedRealitySpeechHandler>(this);
-        }
+        CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
     }
 
     private void OnDisable() {

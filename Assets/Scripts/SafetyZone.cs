@@ -20,6 +20,12 @@ public class SafetyZone : MonoBehaviour {
         restart?.Invoke();
     }
 
+    private void OnDestroy() {
+        Destroy(rHandObj);
+        Destroy(lHandObj);
+        Destroy(headObj);
+    }
+
     private void Update() {
         headObj.transform.position = Camera.main.transform.position;
         if (HandJointUtils.TryGetJointPose(TrackedHandJoint.MiddleKnuckle, Handedness.Right, out pose)) {

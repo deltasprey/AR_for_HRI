@@ -1,5 +1,6 @@
 ﻿using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -18,10 +19,11 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
 
     private IMixedRealityEyeGazeProvider EyeGazeProvider;
     private TextMeshPro _instructionTextMesh;
+    private List<GameObject> markers = new();
     private GameObject lookTarget;
     private string _lookAtSurfaceText;
     private bool place = true;
-    private int focused = 0;
+    private int focused = 0, count = 0;
 
     private void Start() {
         EyeGazeProvider = CoreServices.InputSystem.EyeGazeProvider;
@@ -44,11 +46,20 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
             if (place) {
                 Vector3? foundPosition = EyeGazeProvider.HitInfo.point;
                 if (foundPosition != null) {
-                    Instantiate(_objectToPlace, foundPosition.Value, Quaternion.identity, _container.transform);
+                    GameObject marker = Instantiate(_objectToPlace, foundPosition.Value, Quaternion.Euler(180, 0, 0), _container.transform);
+                    marker.GetComponentInChildren<TMP_Text>().text = (++count).ToString();
+                    markers.Add(marker);
                 }
             } else if (lookTarget != null) {
+                int idx = int.Parse(lookTarget.GetComponentInChildren<TMP_Text>().text) - 1;
+                markers.RemoveAt(idx);
+                foreach (GameObject marker in markers.GetRange(idx, markers.Count - idx)) {
+                    TMP_Text markerText = marker.GetComponentInChildren<TMP_Text>();
+                    markerText.text = (int.Parse(markerText.text) - 1).ToString();
+                }
                 Destroy(lookTarget);
                 place = true;
+                count--;
             }
         }
     }

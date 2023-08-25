@@ -2,8 +2,10 @@ using UnityEngine;
 using RosSharp.RosBridgeClient;
 using RosSharp.RosBridgeClient.Messages.Geometry;
 using System.Collections;
+using Microsoft.MixedReality.Toolkit.Input;
+using Microsoft.MixedReality.Toolkit;
 
-public class TurtleControl : MonoBehaviour {
+public class TurtleControl : MonoBehaviour, IMixedRealitySpeechHandler {
     public JoystickControl joystick;
     public Transform turtleBot;
     public string turtlebotCommandTopic = "/turtle1/cmd_vel", turtlebotSubscribeTopic = "/turtle1/pose";
@@ -29,6 +31,16 @@ public class TurtleControl : MonoBehaviour {
         rosSocket = GetComponent<RosConnector>().RosSocket;
         rosSocket.Subscribe<TurtlePose>(turtlebotSubscribeTopic, poseCallback);
         twistMessage = new Twist();
+    }
+
+    private void OnEnable() {
+        CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
+    }
+
+    private void OnDisable() {
+        try {
+            CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this);
+        } catch { }
     }
 
     private void Update() {
@@ -92,6 +104,14 @@ public class TurtleControl : MonoBehaviour {
         theta = msg.theta;
         if (!initialised) {
             initialised = true;
+        }
+    }
+
+    void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
+        if (eventData.Command.Keyword.ToLower() == "stop") {
+            stopCmds();
+        } else if (eventData.Command.Keyword.ToLower() == "restart") {
+            restartCmds();
         }
     }
 

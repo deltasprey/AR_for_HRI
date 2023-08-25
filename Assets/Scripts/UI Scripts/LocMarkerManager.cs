@@ -55,11 +55,11 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         if (qr.CodeText[0] == '(' && qr.CodeText[qr.CodeText.Length - 1] == ')') {
             if (qr.CodeText.CountIndices(',') == 2) {
                 print("Offset");
-                string[] codeVals = qr.CodeText.Split(',');
+                string[] codeVals = qr.CodeText[1..(qr.CodeText.Length - 1)].Split(',');
                 QROffset(float.Parse(codeVals[0]), float.Parse(codeVals[1]), float.Parse(codeVals[2]));
             } else if (qr.CodeText.CountIndices(',') == 5) {
                 print("Offset and rotation");
-                string[] codeVals = qr.CodeText.Split(',');
+                string[] codeVals = qr.CodeText[1..(qr.CodeText.Length - 1)].Split(',');
                 QROffsetRotation(float.Parse(codeVals[0]), float.Parse(codeVals[1]), float.Parse(codeVals[2]),
                                  float.Parse(codeVals[3]), float.Parse(codeVals[4]), float.Parse(codeVals[5]));
             }
@@ -122,11 +122,20 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
     void QROffset(float x, float y, float z) {
         localiser.position = new Vector3(worldMarker.position.x + x, worldMarker.position.y + y, worldMarker.position.z + z);
+        moveX.text = (x - worldMarker.position.x).ToString();
+        moveY.text = (y - worldMarker.position.y).ToString();
+        moveZ.text = (z - worldMarker.position.z).ToString();
     }
 
     void QROffsetRotation(float x, float y, float z, float rx, float ry, float rz) {
         localiser.position = new Vector3(worldMarker.position.x + x, worldMarker.position.y + y, worldMarker.position.z + z);
         localiser.rotation = Quaternion.Euler(rx, ry, rz);
+        moveX.text = (x - worldMarker.position.x).ToString();
+        moveY.text = (y - worldMarker.position.y).ToString();
+        moveZ.text = (z - worldMarker.position.z).ToString();
+        rotX.text = rx.ToString();
+        rotY.text = (ry - worldMarker.eulerAngles.y).ToString();
+        rotZ.text = rz.ToString();
     }
 
     void moveMarker(float x, float z, float theta) {

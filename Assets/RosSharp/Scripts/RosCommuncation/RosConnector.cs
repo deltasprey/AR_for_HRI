@@ -71,6 +71,9 @@ namespace RosSharp.RosBridgeClient {
                     script.enabled = true;
                 }
                 btnText.text = "Connected";
+                connBtn.interactable = false;
+                serverIP.interactable = false;
+                serverPort.interactable = false;
                 msgText.text = "Connected to RosBridge: " + RosBridgeServerUrl;
                 msgText.color = Color.green;
             }
