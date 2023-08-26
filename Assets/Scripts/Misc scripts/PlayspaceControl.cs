@@ -1,11 +1,9 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class PlayspaceControl : MonoBehaviour {
-    List<Transform> objects = new();
-    List<Vector3> objInit = new();
+    private List<Transform> objects = new();
+    private List<Vector3> objInit = new();
     
     private void Start() {
         foreach (Transform obj in GetComponentsInChildren<Transform>()) {

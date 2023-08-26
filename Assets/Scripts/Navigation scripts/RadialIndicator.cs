@@ -10,8 +10,8 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
     [SerializeField] private Image indicator;
     [SerializeField] private KeyCode selectKey = KeyCode.Mouse0;
     [SerializeField] private UnityEvent myEvent;
-    
-    bool shouldUpdate = false, loopCompleted = false, keyPressed = false;
+
+    private bool shouldUpdate = false, loopCompleted = false, keyPressed = false;
 
     private void Start() {
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(this);

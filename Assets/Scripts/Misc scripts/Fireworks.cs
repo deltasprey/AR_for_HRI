@@ -27,7 +27,7 @@ public class Fireworks : MonoBehaviour, IMixedRealitySpeechHandler {
         StartCoroutine(explodeFireworks());
     }
 
-    IEnumerator explodeFireworks() {
+    private IEnumerator explodeFireworks() {
         print("Fireworks");
         foreach (GameObject firework in fireworks) {
             firework.GetComponent<ParticleSystem>().Play();

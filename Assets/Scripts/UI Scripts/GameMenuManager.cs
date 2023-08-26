@@ -10,7 +10,7 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
     public float spawnDistance = 2;
     public bool follow = false;
 
-    bool navigating = false;
+    private bool navigating = false;
 
     private void OnEnable() {
         CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
@@ -39,7 +39,12 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
         }
     }
 
-    public void ToggleSpatialAwareness() {
+    private void toggleMenu() {
+        menu.SetActive(!menu.activeSelf);
+        menu.transform.position = player.position + new Vector3(player.forward.x, player.forward.y, player.forward.z).normalized * spawnDistance;
+    }
+
+    public void toggleSpatialAwareness() {
         if (toggle.isOn) {
             CoreServices.SpatialAwarenessSystem.Enable();
         } else {
@@ -51,24 +56,25 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
         follow = !follow;
     }
 
-    void toggleMenu() {
-        menu.SetActive(!menu.activeSelf);
-        menu.transform.position = player.position + new Vector3(player.forward.x, player.forward.y, player.forward.z).normalized * spawnDistance;
+    public void toggleNavigation() {
+        if (navigating) {
+            CoreServices.SpatialAwarenessSystem.Disable();
+            instructionText.SetActive(false);
+            toggle.isOn = false;
+            navigating = false;
+        } else {
+            CoreServices.SpatialAwarenessSystem.Enable();
+            instructionText.SetActive(true);
+            toggle.isOn = true;
+            navigating = true;
+        }
     }
 
     void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
         if (eventData.Command.Keyword.ToLower() == "menu") {
             toggleMenu();
         } else if (eventData.Command.Keyword.ToLower() == "toggle navigation") {
-            if (navigating) {
-                CoreServices.SpatialAwarenessSystem.Disable();
-                instructionText.SetActive(false);
-                navigating = false;
-            } else {
-                CoreServices.SpatialAwarenessSystem.Enable();
-                instructionText.SetActive(true);
-                navigating = true;
-            }
+            toggleNavigation();
         }
     }
 }

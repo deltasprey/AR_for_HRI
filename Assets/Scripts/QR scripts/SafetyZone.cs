@@ -9,9 +9,9 @@ public class SafetyZone : MonoBehaviour {
     public static event StopCmd stop;
     public static event StopCmd restart;
 
-    GameObject rHandObj, lHandObj, headObj;
-    MixedRealityPose pose;
-    uint stopped = 0;
+    private GameObject rHandObj, lHandObj, headObj;
+    private MixedRealityPose pose;
+    private uint stopped = 0;
 
     private void Start() {
         rHandObj = Instantiate(handCollider);

@@ -25,12 +25,12 @@ public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler
         clearMarkers();
     }
 
-    void spawnMarker() {
+    private void spawnMarker() {
         GameObject qrCodePrefab = GetComponent<QRTracking.QRCodesVisualizer>().qrCodePrefab;
         Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.identity);
     }
 
-    void clearMarkers() {
+    private void clearMarkers() {
         QRTracking.QRCode[] qrCodes = FindObjectsOfType<QRTracking.QRCode>();
         foreach (QRTracking.QRCode qrPrefab in qrCodes) {
             Destroy(qrPrefab.gameObject);

@@ -7,6 +7,7 @@ using Microsoft.MixedReality.Toolkit;
 
 public class TurtleControl : MonoBehaviour, IMixedRealitySpeechHandler {
     public JoystickControl joystick;
+    public HandController handControl;
     public Transform turtleBot;
     public string turtlebotCommandTopic = "/turtle1/cmd_vel", turtlebotSubscribeTopic = "/turtle1/pose";
     public float linearSpeed = 1f, turnSpeed = 1f;
@@ -15,13 +16,13 @@ public class TurtleControl : MonoBehaviour, IMixedRealitySpeechHandler {
     public delegate void MsgReceived(float x, float z, float theta);
     public static event MsgReceived msgValueChanged;
 
-    float x = 0, z = 0, theta = 0;
-    float oldX, oldZ, oldTheta;
-    float forwardSpeed = 0, strafeSpeed = 0, angularSpeed = 0;
-    bool isGrabbed = false, initialised = false, offsetted = false, stop = true;
-    Twist twistMessage;
-    RosSocket rosSocket;
-    UnityEngine.Vector3 offset, position;
+    private float x = 0, z = 0, theta = 0;
+    private float oldX, oldZ, oldTheta;
+    private float forwardSpeed = 0, strafeSpeed = 0, angularSpeed = 0;
+    private bool isGrabbed = false, initialised = false, offsetted = false, stop = true;
+    private Twist twistMessage;
+    private RosSocket rosSocket;
+    private UnityEngine.Vector3 offset, position;
 
     private void Start() {
         Invoke(nameof(setStopVar), 0.2f);
@@ -49,6 +50,11 @@ public class TurtleControl : MonoBehaviour, IMixedRealitySpeechHandler {
             if (joystick.isGrabbed) {
                 forwardSpeed = joystick.rotation.x * linearSpeed;
                 angularSpeed = joystick.rotation.y * turnSpeed;
+                isGrabbed = true;
+            } else if (handControl.tracking) {
+                forwardSpeed = handControl.rotation.x * linearSpeed;
+                strafeSpeed = handControl.rotation.z * linearSpeed;
+                angularSpeed = handControl.rotation.y * turnSpeed;
                 isGrabbed = true;
             } else if (isGrabbed) {
                 forwardSpeed = 0;
@@ -92,11 +98,11 @@ public class TurtleControl : MonoBehaviour, IMixedRealitySpeechHandler {
         }
     }
 
-    void setStopVar() {
+    private void setStopVar() {
         stop = stopOnLoad;
     }
 
-    void poseCallback(TurtlePose msg) {
+    private void poseCallback(TurtlePose msg) {
         //Debug.Log($"{msg.x}, {msg.y}, {msg.theta}, {msg.linear_velocity}, {msg.angular_velocity}");
         //print(initialised);
         x = msg.x;
@@ -107,25 +113,17 @@ public class TurtleControl : MonoBehaviour, IMixedRealitySpeechHandler {
         }
     }
 
-    void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
-        if (eventData.Command.Keyword.ToLower() == "stop") {
-            stopCmds();
-        } else if (eventData.Command.Keyword.ToLower() == "restart") {
-            restartCmds();
-        }
-    }
-
-    void stopCmds() {
+    private void stopCmds() {
         StartCoroutine(floodPublish());
         stop = true;
     }
 
-    void restartCmds() {
+    private void restartCmds() {
         StopAllCoroutines();
         stop = false;
     }
 
-    IEnumerator floodPublish() {
+    private IEnumerator floodPublish() {
         Twist floodTwistMessage = new() {
             linear = new RosSharp.RosBridgeClient.Messages.Geometry.Vector3(),
             angular = new RosSharp.RosBridgeClient.Messages.Geometry.Vector3()
@@ -133,6 +131,14 @@ public class TurtleControl : MonoBehaviour, IMixedRealitySpeechHandler {
         while (true) {
             rosSocket.Publish(turtlebotCommandTopic, floodTwistMessage);
             yield return new WaitForSeconds(0.02f);
+        }
+    }
+
+    void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
+        if (eventData.Command.Keyword.ToLower() == "stop") {
+            stopCmds();
+        } else if (eventData.Command.Keyword.ToLower() == "restart") {
+            restartCmds();
         }
     }
 

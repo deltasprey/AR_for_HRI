@@ -3,6 +3,7 @@ using Microsoft.MixedReality.Toolkit.Input;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler {
     [SerializeField]
@@ -18,6 +19,7 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
     private GameObject _container;
 
     private IMixedRealityEyeGazeProvider EyeGazeProvider;
+    private LineRenderer lineRenderer;
     private TextMeshPro _instructionTextMesh;
     private List<GameObject> markers = new();
     private GameObject lookTarget;
@@ -28,6 +30,8 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
     private void Start() {
         EyeGazeProvider = CoreServices.InputSystem.EyeGazeProvider;
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityFocusHandler>(this);
+
+        lineRenderer = GetComponent<LineRenderer>();
 
         _instructionTextMesh = _instructionText.GetComponentInChildren<TextMeshPro>();
         _lookAtSurfaceText = $"Please look at the spatial map max {_maxDistance}m ahead of you";
@@ -46,20 +50,24 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
             if (place) {
                 Vector3? foundPosition = EyeGazeProvider.HitInfo.point;
                 if (foundPosition != null) {
-                    GameObject marker = Instantiate(_objectToPlace, foundPosition.Value, Quaternion.Euler(180, 0, 0), _container.transform);
+                    GameObject marker = Instantiate(_objectToPlace, foundPosition.Value + Vector3.up * 0.05f, Quaternion.Euler(180, 0, 0), _container.transform);
                     marker.GetComponentInChildren<TMP_Text>().text = (++count).ToString();
                     markers.Add(marker);
+                    lineRenderer.positionCount = count;
+                    lineRenderer.SetPosition(count - 1, foundPosition.Value + Vector3.up * 0.11f);
                 }
             } else if (lookTarget != null) {
                 int idx = int.Parse(lookTarget.GetComponentInChildren<TMP_Text>().text) - 1;
                 markers.RemoveAt(idx);
-                foreach (GameObject marker in markers.GetRange(idx, markers.Count - idx)) {
-                    TMP_Text markerText = marker.GetComponentInChildren<TMP_Text>();
+                for (int i = idx; i < markers.Count; i++) {
+                    TMP_Text markerText = markers[i].GetComponentInChildren<TMP_Text>();
                     markerText.text = (int.Parse(markerText.text) - 1).ToString();
+                    lineRenderer.SetPosition(i, lineRenderer.GetPosition(i + 1));
                 }
                 Destroy(lookTarget);
                 place = true;
                 count--;
+                lineRenderer.positionCount = count;
             }
         }
     }
