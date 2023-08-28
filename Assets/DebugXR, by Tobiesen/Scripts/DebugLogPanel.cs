@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -123,14 +124,18 @@ public class DebugLogPanel : MonoBehaviour
         string message = stringBuilder.ToString();
         debugText.text = message;
 
-        Invoke(nameof(UpdateViewport), 0.5f);
+        StartCoroutine(UpdateViewport());
     }
 
-    void UpdateViewport() {
-        if (debugText.isTextOverflowing) {
-            debugText.rectTransform.sizeDelta = new Vector2(debugText.rectTransform.sizeDelta.x, debugText.rectTransform.sizeDelta.y + 14f);
+    IEnumerator UpdateViewport() {
+        yield return new WaitForSeconds(0.5f);
+        while (debugText.isTextOverflowing) {
+            debugText.rectTransform.sizeDelta = new Vector2(debugText.rectTransform.sizeDelta.x, 
+                debugText.rectTransform.sizeDelta.y + 14f * (includeStackTrace ? 4 : 1));
             debugText.rectTransform.localPosition = new Vector3(0, debugText.rectTransform.sizeDelta.y - 80, 0);
+            yield return new WaitForSeconds(0.2f);
         }
+        yield return null;
     }
 
     /// <summary>

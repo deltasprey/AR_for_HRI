@@ -45,6 +45,7 @@ public class HandController : MonoBehaviour {
 
     private void TrackHandRotation() {
         rotation = (pose.Rotation * Quaternion.Inverse(initRot)).eulerAngles;
+        rotation *= 0.001f;
         //alter angles maybe
     }
 

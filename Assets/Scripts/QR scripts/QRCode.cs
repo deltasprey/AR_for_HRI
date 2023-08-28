@@ -83,7 +83,9 @@ namespace QRTracking {
 
         // Update is called once per frame
         void Update() {
-            UpdatePropertiesDisplay();
+            if (qrCodeCube != null) {
+                UpdatePropertiesDisplay();
+            }
             if (launch) {
                 launch = false;
                 LaunchUri();
