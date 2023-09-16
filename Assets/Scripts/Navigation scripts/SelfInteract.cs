@@ -1,3 +1,5 @@
+// Navigation marker interction events
+
 using UnityEngine;
 
 public class SelfInteract : MonoBehaviour {

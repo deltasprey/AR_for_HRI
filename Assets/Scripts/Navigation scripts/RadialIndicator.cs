@@ -20,22 +20,28 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
     private void Update() {
         if (!loopCompleted) {
             if (keyPressed || Input.GetKey(selectKey)) {
+                // Update radial indicator progress in forward direction
                 shouldUpdate = false;
                 indicatorTimer += Time.deltaTime;
                 indicator.enabled = true;
                 indicator.fillAmount = indicatorTimer;
 
+                // Reset indicator if it's completely filled
                 if (indicatorTimer >= maxIndicatorTimer) {
                     indicatorTimer = 0;
                     indicator.fillAmount = 0;
                     indicator.enabled = false;
-                    loopCompleted = true;
+                    loopCompleted = true; // Stop indicator progress from looping
+
+                    // Invoke long click event
                     myEvent.Invoke();
                 }
             } else if (shouldUpdate) {
+                // Reverse radial indicator direction
                 indicatorTimer -= Time.deltaTime;
                 indicator.fillAmount = indicatorTimer;
 
+                // Reset indicator if it's empty
                 if (indicatorTimer <= 0) {
                     indicatorTimer = 0;
                     indicator.fillAmount = 0;
@@ -51,12 +57,14 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
         }
     }
 
+    // Start radial indicator on pinch gesture
     public void OnPointerDown(MixedRealityPointerEventData eventData) {
         keyPressed = true;
     }
 
     public void OnPointerDragged(MixedRealityPointerEventData eventData) { }
 
+    // Pinch gesture released event
     public void OnPointerUp(MixedRealityPointerEventData eventData) {
         shouldUpdate = true;
         loopCompleted = false;

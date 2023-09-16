@@ -1,3 +1,5 @@
+// Custom ROS topic message subscriber
+
 using Newtonsoft.Json;
 
 namespace RosSharp.RosBridgeClient.Messages.Geometry {

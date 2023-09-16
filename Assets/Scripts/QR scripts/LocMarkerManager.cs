@@ -18,22 +18,26 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     public Button simpleSaveButton, complexSaveButton;
 
     private Transform player, origParent;
-    private TurtleControl rosPose;
-    private Vector3 offset;
+    private CmdVelControl rosPose;
+    private Vector3 position;
+    private Quaternion rotation;
+    private Matrix4x4 transformationMatrix;
 
     private readonly float[] moveAmounts = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.5f };
     private readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
     private float moveAmount, localiserScale, safetyScale, offsetTheta;
     private uint rotateAmount;
-    private bool track = false, trackScale = true;
+    private bool track = false, trackScale = true, initialised = false;
 
     private void Start() {
+        // Marker positioning initialisation
         player = Camera.main.transform;
         origParent = transform.parent;
-        rosPose = FindObjectOfType<TurtleControl>();
+        rosPose = FindObjectOfType<CmdVelControl>();
         //print(rosPose.linearSpeed);
-        Invoke(nameof(markerMoved), 1);
+        Invoke(nameof(markerMoved), 0.5f);
 
+        // UI initialisation
         localiserScale = localiser.localScale.x * 100;
         simpleScaleSlider.value = localiserScale;
         complexScaleSlider.value = localiserScale;
@@ -50,9 +54,10 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         rotateAmount = rotateAmounts[rotateStep.value];
         StartCoroutine(alphaUp());
 
+        // QR code reading
         //qr = GetComponentInParent<QRTracking.QRCode>();
         print(qr.CodeText);
-        if (qr.CodeText[0] == '(' && qr.CodeText[^1] == ')') {
+        if (qr.CodeText.Length > 0 && qr.CodeText[0] == '(' && qr.CodeText[^1] == ')') {
             if (qr.CodeText.CountIndices(',') == 2) {
                 print("Offset");
                 string[] codeVals = qr.CodeText[1..^1].Split(',');
@@ -102,14 +107,14 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
     private void OnEnable() {
         CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
-        TurtleControl.msgValueChanged += moveMarker;
+        CmdVelControl.msgValueChanged += moveMarker;
     }
 
     private void OnDisable() {
         try {
             CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this);
         } catch { }
-        TurtleControl.msgValueChanged -= moveMarker;
+        CmdVelControl.msgValueChanged -= moveMarker;
     }
 
     private void QROffset(float x, float y, float z) {
@@ -129,14 +134,36 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         rotZ.text = rz.ToString();
     }
 
+    // Robot position changed event callback
     private void moveMarker(float x, float z, float theta) {
-        localiser.SetParent(null);
-        origParent.SetParent(localiser);
-        Vector3 position = new(x + offset.x, offset.y, z + offset.z);
-        Quaternion rotation = Quaternion.Euler(90, 0, theta * Mathf.Rad2Deg - 90 + offsetTheta);
-        localiser.SetPositionAndRotation(position, rotation);
-        origParent.SetParent(null);
-        localiser.SetParent(origParent);
+        if (initialised) {
+            worldMarker.SetParent(localiser);
+            //Vector3 position = new(x + offset.x, offset.y, z + offset.z);
+            position = transformationMatrix.MultiplyPoint(new Vector3(x, 0, z));
+            rotation = Quaternion.Euler(0, theta + offsetTheta, 0); //* Mathf.Rad2Deg - 90
+            localiser.SetPositionAndRotation(position, rotation);
+            worldMarker.SetParent(origParent);
+        } else {
+            markerMoved();
+        }
+    }
+
+    // Calculate offset between virtual marker and robot pose
+    // Must update whenever the marker is moved
+    public void markerMoved() {
+        var (x, z, theta) = rosPose.initPos();
+        if (theta != 404 && x != 0 && z != 0) {
+            // Coordinate frame transform
+            Quaternion botRot = Quaternion.Euler(0, localiser.rotation.eulerAngles.y, 0);
+            Quaternion rotationAB = Quaternion.Inverse(Quaternion.Euler(0, theta, 0)) * botRot;
+            Matrix4x4 rotationMatrix = Matrix4x4.TRS(Vector3.zero, rotationAB, Vector3.one);
+            transformationMatrix = Matrix4x4.Translate(localiser.position - new Vector3(x, 0 , z)) * rotationMatrix;
+            offsetTheta = localiser.rotation.eulerAngles.y - theta;
+
+            //offset = new(localiser.position.x - x, localiser.position.y, localiser.position.z - z);
+            //offsetTheta = localiser.rotation.z - theta;
+            initialised = true;
+        }
     }
 
     void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
@@ -147,12 +174,8 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         }
     }
 
-    public void markerMoved() {
-        var (x, z, theta) = rosPose.initPos();
-        offset = new(localiser.position.x - x, localiser.position.y, localiser.position.z - z);
-        offsetTheta = localiser.rotation.z - theta;
-    }
-
+    #region Marker Object UI Control
+    // View virtual marker in sphere mode
     public void viewSphere() {
         StopCoroutine(alphaDown());
         StartCoroutine(alphaUp());
@@ -160,6 +183,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         localiser.GetComponent<Outline>().OutlineWidth = 5;
     }
 
+    // View virtual marker in coordinate frame mode
     public void viewFrame() {
         StopCoroutine(alphaUp());
         StartCoroutine(alphaDown());
@@ -168,6 +192,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         localiser.GetComponent<Outline>().enabled = false;
     }
 
+    // Change the size of the virtual marker
     public void adjustScale() {
         if (simpleGUI.activeSelf) {
             localiserScale = simpleScaleSlider.value;
@@ -182,6 +207,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         adjustSafety();
     }
 
+    // Change the size of the safety zone
     public void adjustSafety() {
         if (simpleGUI.activeSelf) {
             safetyScale = simpleSafetySlider.value/10;
@@ -197,7 +223,9 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
     public void sliderSelect() { trackScale = false; }
     public void sliderDeselect() { trackScale = true; }
+    #endregion
 
+    #region Complex UI Button Callbacks
     public void viewSimpleControls() {
         simpleGUI.SetActive(true);
         complexGUI.SetActive(false);
@@ -353,7 +381,10 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         rotZ.text = localiser.eulerAngles.z.ToString("F3");
         markerMoved();
     }
+    #endregion
 
+    #region Saving and Loading
+    // Store localisation marker position and rotation in PlayerPrefs
     public void save() {
         simpleSaveButton.interactable = false;
         complexSaveButton.interactable = false;
@@ -367,6 +398,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         StartCoroutine(saveDisplay());
     }
 
+    // Load previously saved localisation marker position and rotation in PlayerPrefs
     public void load() {
         if (PlayerPrefs.HasKey("moveX")) {
             float xShift = PlayerPrefs.GetFloat("moveX");
@@ -386,7 +418,10 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
             markerMoved();
         }
     }
+    #endregion
 
+    #region Animations
+    // Hide coordinate frame of the virtual marker
     private IEnumerator alphaUp() {
         Color color = sphere.color;
         while (color.a < 1) {
@@ -396,6 +431,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         }
     }
 
+    // Show coordinate frame of the virtual marker
     private IEnumerator alphaDown() {
         Color color = sphere.color;
         while (color.a > 0) {
@@ -405,6 +441,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         }
     }
 
+    // Visual indicator for save button being pressed
     private IEnumerator saveDisplay() {
         simpleSaveButton.GetComponentInChildren<TextMeshProUGUI>().text = "Saving...";
         complexSaveButton.GetComponentInChildren<TextMeshProUGUI>().text = "Saving...";
@@ -414,4 +451,5 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         simpleSaveButton.interactable = true;
         complexSaveButton.interactable = true;
     }
+    #endregion
 }

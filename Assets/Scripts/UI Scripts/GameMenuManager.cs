@@ -70,6 +70,10 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
         }
     }
 
+    public void exitApp() {
+        Application.Quit();
+    }
+
     void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
         if (eventData.Command.Keyword.ToLower() == "menu") {
             toggleMenu();
