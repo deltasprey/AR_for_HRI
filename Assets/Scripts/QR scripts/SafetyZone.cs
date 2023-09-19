@@ -29,7 +29,7 @@ public class SafetyZone : MonoBehaviour {
 
     private void Update() {
         // Update prefab's positions to user's head and hands
-        //headObj.transform.position = Camera.main.transform.position;
+        headObj.transform.rotation = Quaternion.identity;
         if (HandJointUtils.TryGetJointPose(TrackedHandJoint.MiddleKnuckle, Handedness.Right, out pose)) {
             rHandObj.transform.position = pose.Position;
         }

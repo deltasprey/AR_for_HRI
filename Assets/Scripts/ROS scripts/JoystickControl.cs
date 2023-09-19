@@ -1,5 +1,7 @@
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Utilities;
+using System.Collections;
+using TMPro;
 using UnityEngine;
 
 public class JoystickControl : MonoBehaviour {
@@ -7,8 +9,10 @@ public class JoystickControl : MonoBehaviour {
     public bool isGrabbed { get; private set; } = false;
     public Vector3 rotation { get; private set; }
     public float deadZone = 0.05f;
+    public TMP_Text forward, right;
 
     [SerializeField] private bool attachToHand = false;
+    private bool tracking = false;
     private Vector3 topPos, topRot;
     private MixedRealityPose pose;
     private float x, y;
@@ -20,30 +24,55 @@ public class JoystickControl : MonoBehaviour {
     }
 
     private void Update() {
+        Base.LookAt(Top);
+        Base.localEulerAngles = new Vector3(Base.localEulerAngles.x, Base.localEulerAngles.y, 0);
+
         if (isGrabbed) {
             // Update public var with joystick's rotation when its rotation exceeds the deadzone
-            x = 0; y = 0;
-            if (Mathf.Abs(Base.localRotation.x) > deadZone) {
-                x = Base.localRotation.x * 2;
+            x = Mathf.Repeat(Base.localEulerAngles.x + 180, 360) - 180;
+            y = Mathf.Repeat(Base.localEulerAngles.y + 180, 360) - 180;
+
+            if (Mathf.Abs(x) > deadZone) {
+                x /= 50;
+            } else {
+                x = 0;
             }
-            if (Mathf.Abs(Base.localRotation.y) > deadZone) {
-                y = Base.localRotation.y * 2;
+            if (Mathf.Abs(y) > deadZone) {
+                y /= 50;
+            } else {
+                y = 0;
             }
-            rotation = new(x, y, 0);
+            rotation = new(x, y);
         } else {
             // Rotate the joystick back to its central position
             rotation = Vector3.zero;
             Top.localPosition = Vector3.MoveTowards(Top.localPosition, topPos, 0.01f);
             Top.localEulerAngles = Vector3.RotateTowards(Top.localEulerAngles, topRot, 0.1f, 1f);
         }
+        forward.text = "Forward\n" + rotation.x.ToString("F3");
+        right.text = "Right\n" + rotation.y.ToString("F3");
 
         if (attachToHand) {
-            if (HandJointUtils.TryGetJointPose(TrackedHandJoint.Palm, Handedness.Left, out pose)) {
-                Base.parent.SetPositionAndRotation(pose.Position, pose.Rotation * Quaternion.Euler(-90, -90, 0));
+            //if (HandJointUtils.TryGetJointPose(TrackedHandJoint.Palm, Handedness.Left, out pose)) {
+            //    Base.parent.SetPositionAndRotation(pose.Position, pose.Rotation * Quaternion.Euler(-90, -90, 0));
+            //} else {
+            //    Base.parent.localPosition = new Vector3(2, 0, 3);
+            //    Base.parent.localEulerAngles = new Vector3(-90, 0);
+            //}
+            if (!HandJointUtils.TryGetJointPose(TrackedHandJoint.Palm, Handedness.Left, out pose)) {
+                if (tracking) {
+                    StopAllCoroutines();
+                    transform.localPosition = new Vector3(2, 0, 3);
+                    tracking = false;
+                }
             } else {
-                Base.parent.localPosition = new Vector3(2, 0, 3);
-                Base.parent.localEulerAngles = new Vector3(-90, 0);
+                if (!tracking) {
+                    transform.position = pose.Position;
+                    tracking = true;
+                    StartCoroutine(trackHand());
+                }
             }
+            transform.localEulerAngles = new Vector3(-90, 0, Camera.main.transform.rotation.eulerAngles.y);
         }
     }
 
@@ -53,5 +82,15 @@ public class JoystickControl : MonoBehaviour {
 
     public void released() {
         isGrabbed = false;
+    }
+
+    IEnumerator trackHand() {
+        while (tracking) {
+            transform.position = Vector3.MoveTowards(transform.position, 
+                                                     pose.Position,
+                                                     Mathf.Max(Vector3.Magnitude(transform.position - pose.Position)/5, 0.01f));
+            yield return new WaitForSeconds(0.005f);
+        }
+        yield return null;
     }
 }

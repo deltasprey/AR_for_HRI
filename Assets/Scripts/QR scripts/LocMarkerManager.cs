@@ -5,9 +5,11 @@ using TMPro;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Unity.VisualScripting;
+using QRTracking;
+using System;
 
 public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
-    public QRTracking.QRCode qr;
+    public QRCode qr;
     public GameObject simpleGUI, complexGUI;
     public Material sphere;
     public Transform localiser, worldMarker, safetyZone;
@@ -17,11 +19,12 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     public TMP_InputField moveX, moveY, moveZ, rotX, rotY, rotZ;
     public Button simpleSaveButton, complexSaveButton;
 
+    private QRCodesManager qrManager;
     private Transform player, origParent;
     private CmdVelControl rosPose;
-    private Vector3 position;
+    private Vector3 position, offset;
     private Quaternion rotation;
-    private Matrix4x4 transformationMatrix;
+    private Matrix4x4 rotationMatrix, transformationMatrix;
 
     private readonly float[] moveAmounts = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.5f };
     private readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
@@ -55,7 +58,8 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         StartCoroutine(alphaUp());
 
         // QR code reading
-        //qr = GetComponentInParent<QRTracking.QRCode>();
+        qrManager = FindObjectOfType<QRCodesManager>();
+        qrManager.QRCodeUpdated += qrPositionMoved;
         print(qr.CodeText);
         if (qr.CodeText.Length > 0 && qr.CodeText[0] == '(' && qr.CodeText[^1] == ')') {
             if (qr.CodeText.CountIndices(',') == 2) {
@@ -108,6 +112,8 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     private void OnEnable() {
         CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
         CmdVelControl.msgValueChanged += moveMarker;
+        
+        // QRCodesManager.QRCodeUpdated += moveMarker;
     }
 
     private void OnDisable() {
@@ -138,8 +144,8 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     private void moveMarker(float x, float z, float theta) {
         if (initialised) {
             worldMarker.SetParent(localiser);
-            //Vector3 position = new(x + offset.x, offset.y, z + offset.z);
-            position = transformationMatrix.MultiplyPoint(new Vector3(x, 0, z));
+            position = rotationMatrix.MultiplyPoint(new Vector3(x, 0, z)) + offset;
+            //position = transformationMatrix.MultiplyPoint(new Vector3(x, 0, z));
             rotation = Quaternion.Euler(0, theta + offsetTheta, 0); //* Mathf.Rad2Deg - 90
             localiser.SetPositionAndRotation(position, rotation);
             worldMarker.SetParent(origParent);
@@ -152,18 +158,39 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     // Must update whenever the marker is moved
     public void markerMoved() {
         var (x, z, theta) = rosPose.initPos();
-        if (theta != 404 && x != 0 && z != 0) {
-            // Coordinate frame transform
+        if (theta != 404) {
             Quaternion botRot = Quaternion.Euler(0, localiser.rotation.eulerAngles.y, 0);
-            Quaternion rotationAB = Quaternion.Inverse(Quaternion.Euler(0, theta, 0)) * botRot;
-            Matrix4x4 rotationMatrix = Matrix4x4.TRS(Vector3.zero, rotationAB, Vector3.one);
-            transformationMatrix = Matrix4x4.Translate(localiser.position - new Vector3(x, 0 , z)) * rotationMatrix;
             offsetTheta = localiser.rotation.eulerAngles.y - theta;
 
-            //offset = new(localiser.position.x - x, localiser.position.y, localiser.position.z - z);
-            //offsetTheta = localiser.rotation.z - theta;
+            rotationMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.Inverse(Quaternion.Euler(0, theta, 0)) * botRot, Vector3.one);
+            offset = localiser.position - rotationMatrix.MultiplyPoint(new Vector3(x, 0, z));
+
             initialised = true;
+            moveMarker(x, z, theta);
+
+            //Quaternion rotationAB = Quaternion.Inverse(Quaternion.Euler(0, theta, 0)) * botRot;
+            //Matrix4x4 rotationMatrix = Matrix4x4.TRS(Vector3.zero, rotationAB, Vector3.one);
+            //transformationMatrix = Matrix4x4.Translate(new Vector3(x, 0, z) - localiser.position) * rotationMatrix;
+
+            //Matrix4x4 unityMatrix = Matrix4x4.TRS(localiser.position, botRot, Vector3.one);
+            //Matrix4x4 robotMatrix = Matrix4x4.TRS(new Vector3(x, 0, z), botRot, Vector3.one);
+            //transformationMatrix = Matrix4x4.Inverse(robotMatrix) * unityMatrix;
+
+            //offset = new(localiser.position.x - x, localiser.position.y, localiser.position.z - z);
+
+            Debug.Log($"Localiser Position: {localiser.position}, Theta: {localiser.rotation.eulerAngles.y}");
+            //Debug.Log($"UnityTRS: {unityMatrix}");
+
+            Debug.Log($"Robot Position: {new Vector3(x, 0, z)}, Theta: {theta}");
+            //Debug.Log($"RobotTRS\n: {robotMatrix}");
+
+            //Debug.Log($"Transformation matrix\n: {transformationMatrix}");
+            //Debug.Log($"Projected Position: {transformationMatrix.MultiplyPoint(new Vector3(x, 0, z))}");
         }
+    }
+
+    private void qrPositionMoved(object sender, QRCodeEventArgs<Microsoft.MixedReality.QR.QRCode> e) {
+        markerMoved();
     }
 
     void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {

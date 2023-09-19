@@ -107,7 +107,7 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
                     //Debug.Log($"{position.x}, {position.y}, {position.z}");
                 }
             } else if (initialised) {
-                // Coordinate frame transform
+                // Coordinate frame transform (not working)
                 UnityEngine.Quaternion botRot = UnityEngine.Quaternion.Euler(0, bot.rotation.eulerAngles.y, 0);
                 UnityEngine.Quaternion rotationAB = UnityEngine.Quaternion.Inverse(odomRef.rotation) * botRot;
                 Matrix4x4 rotationMatrix = Matrix4x4.TRS(UnityEngine.Vector3.zero, rotationAB, UnityEngine.Vector3.one);
