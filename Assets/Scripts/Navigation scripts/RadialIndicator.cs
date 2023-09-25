@@ -13,9 +13,7 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
 
     private bool shouldUpdate = false, loopCompleted = false, keyPressed = false;
 
-    private void Start() {
-        CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(this);
-    }
+    private void Start() { CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(this); }
 
     private void Update() {
         if (!loopCompleted) {
@@ -58,9 +56,7 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
     }
 
     // Start radial indicator on pinch gesture
-    public void OnPointerDown(MixedRealityPointerEventData eventData) {
-        keyPressed = true;
-    }
+    public void OnPointerDown(MixedRealityPointerEventData eventData) { keyPressed = true; }
 
     public void OnPointerDragged(MixedRealityPointerEventData eventData) { }
 

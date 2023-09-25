@@ -3,7 +3,6 @@ using Microsoft.MixedReality.Toolkit.Input;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Timeline;
 
 public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler {
     [SerializeField]
@@ -42,7 +41,7 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
     }
 
     private void Update() {
-        _instructionTextMesh.text = focused > 0 ? "Tap to select a location" : _lookAtSurfaceText;
+        if (_instructionText.activeSelf) _instructionTextMesh.text = focused > 0 ? "Tap to select a location" : _lookAtSurfaceText;
     }
 
     public void PlaceRemoveMarker() {
@@ -72,13 +71,9 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
         }
     }
 
-    void IMixedRealityFocusHandler.OnFocusEnter(FocusEventData eventData) {
-        focused++;
-    }
+    void IMixedRealityFocusHandler.OnFocusEnter(FocusEventData eventData) { focused++; }
 
-    void IMixedRealityFocusHandler.OnFocusExit(FocusEventData eventData) {
-        focused--;
-    }
+    void IMixedRealityFocusHandler.OnFocusExit(FocusEventData eventData) { focused--; }
 
     public void removeMarker(SelfInteract marker) {
         place = false;

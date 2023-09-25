@@ -30,12 +30,8 @@ public class SafetyZone : MonoBehaviour {
     private void Update() {
         // Update prefab's positions to user's head and hands
         headObj.transform.rotation = Quaternion.identity;
-        if (HandJointUtils.TryGetJointPose(TrackedHandJoint.MiddleKnuckle, Handedness.Right, out pose)) {
-            rHandObj.transform.position = pose.Position;
-        }
-        if (HandJointUtils.TryGetJointPose(TrackedHandJoint.MiddleKnuckle, Handedness.Left, out pose)) {
-            lHandObj.transform.position = pose.Position;
-        }
+        if (HandJointUtils.TryGetJointPose(TrackedHandJoint.MiddleKnuckle, Handedness.Right, out pose)) rHandObj.transform.position = pose.Position;
+        if (HandJointUtils.TryGetJointPose(TrackedHandJoint.MiddleKnuckle, Handedness.Left, out pose)) lHandObj.transform.position = pose.Position;
     }
 
     private void OnTriggerEnter(Collider other) {

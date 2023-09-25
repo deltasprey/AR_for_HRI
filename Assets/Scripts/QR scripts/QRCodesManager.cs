@@ -36,6 +36,7 @@ namespace QRTracking {
         private bool capabilityInitialized = false;
         private QRCodeWatcherAccessStatus accessStatus;
         private System.Threading.Tasks.Task<QRCodeWatcherAccessStatus> capabilityTask;
+        private DateTime startupTime;
 
         public System.Guid GetIdForQRCode(string qrCodeData) {
             lock (qrCodesList) {
@@ -56,6 +57,7 @@ namespace QRTracking {
 
         // Use this for initialization
         async protected virtual void Start() {
+            startupTime = DateTime.Now;
             IsSupported = QRCodeWatcher.IsSupported();
             capabilityTask = QRCodeWatcher.RequestAccessAsync();
             accessStatus = await capabilityTask;
@@ -126,32 +128,39 @@ namespace QRTracking {
         }
 
         private void QRCodeWatcher_Updated(object sender, QRCodeUpdatedEventArgs args) {
-            Debug.Log("QRCodesManager QRCodeWatcher_Updated");
+            //Debug.Log("Time since startup (s):" + (DateTime.Now - startupTime).TotalSeconds);
+            //Debug.Log("Last Detected Time:" + args.Code.LastDetectedTime.ToString());
+            //Debug.Log($"Time since last detected {(DateTime.Now - args.Code.LastDetectedTime).TotalSeconds} seconds");
+            if ((DateTime.Now - args.Code.LastDetectedTime).TotalSeconds < (DateTime.Now - startupTime).TotalSeconds) {
+                Debug.Log("QRCodesManager QRCodeWatcher_Updated");
 
-            bool found = false;
-            lock (qrCodesList) {
-                if (qrCodesList.ContainsKey(args.Code.Id)) {
-                    found = true;
-                    qrCodesList[args.Code.Id] = args.Code;
+                bool found = false;
+                lock (qrCodesList) {
+                    if (qrCodesList.ContainsKey(args.Code.Id)) {
+                        found = true;
+                        qrCodesList[args.Code.Id] = args.Code;
+                    }
                 }
-            }
-            if (found) {
-                var handlers = QRCodeUpdated;
-                if (handlers != null) {
-                    handlers(this, QRCodeEventArgs.Create(args.Code));
+                if (found) {
+                    var handlers = QRCodeUpdated;
+                    if (handlers != null) {
+                        handlers(this, QRCodeEventArgs.Create(args.Code));
+                    }
                 }
             }
         }
 
         private void QRCodeWatcher_Added(object sender, QRCodeAddedEventArgs args) {
-            Debug.Log("QRCodesManager QRCodeWatcher_Added");
+            if ((DateTime.Now - args.Code.LastDetectedTime).TotalSeconds < (DateTime.Now - startupTime).TotalSeconds) {
+                Debug.Log("QRCodesManager QRCodeWatcher_Added");
 
-            lock (qrCodesList) {
-                qrCodesList[args.Code.Id] = args.Code;
-            }
-            var handlers = QRCodeAdded;
-            if (handlers != null) {
-                handlers(this, QRCodeEventArgs.Create(args.Code));
+                lock (qrCodesList) {
+                    qrCodesList[args.Code.Id] = args.Code;
+                }
+                var handlers = QRCodeAdded;
+                if (handlers != null) {
+                    handlers(this, QRCodeEventArgs.Create(args.Code));
+                }
             }
         }
 

@@ -4,7 +4,6 @@ using RosSharp.RosBridgeClient.Messages.Geometry;
 using System.Collections;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit;
-using UnityEngine.UIElements;
 
 public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
     public JoystickControl joystick;
@@ -52,9 +51,7 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
 
     private void OnDisable() {
         ExtOdometrySubscriber.msgValueChanged -= poseUpdated;
-        try {
-            CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this);
-        } catch { }
+        try { CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this); } catch { }
     }
 
     private void Update() {
@@ -75,12 +72,6 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
                 isGrabbed = false;
             }
 
-            // Detect keyboard input
-            //if (Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0) {
-            //    forwardSpeed = Input.GetAxis("Vertical") * linearSpeed;
-            //    angularSpeed = Input.GetAxis("Horizontal") * turnSpeed;
-            //}
-
             // Set linear and angular velocities in Twist message
             twistMessage.linear.x = forwardSpeed;
             twistMessage.linear.y = -strafeSpeed;
@@ -95,7 +86,7 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
                     // Update GameObject transform
                     rotation = UnityEngine.Quaternion.Euler(90, theta + offsetTheta, 0);
                     position = transformationMatrix.MultiplyPoint(new UnityEngine.Vector3(x, 0, z));
-                    bot.SetPositionAndRotation(position, rotation);
+                    if (bot != null) bot.SetPositionAndRotation(position, rotation);
 
                     // Invoke pose updated event if the robot has moved (poseCallback has been called)
                     //msgValueChanged?.Invoke(position.x, position.z, theta + thetaOffset);
@@ -126,6 +117,7 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
     // Set the stop parameter on application start
     private void setStopVar() {
         stop = stopOnLoad;
+        joystick.stopped = stopOnLoad;
     }
 
     // Callback for Pose message subscription
@@ -147,6 +139,7 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
         theta = odomRef.rotation.eulerAngles.y;
         if (!initialised) {
             initialised = true;
+            msgValueChanged?.Invoke(x, z, theta);
         }
     }
 
@@ -156,6 +149,7 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
     private void stopCmds() {
         StartCoroutine(floodPublish());
         stop = true;
+        joystick.stopped = true;
     }
 
     // Callback for restart commands from:
@@ -164,6 +158,7 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
     private void restartCmds() {
         StopAllCoroutines();
         stop = false;
+        joystick.stopped = false;
     }
 
     // Spam the ROS messages with stop messages (zero linear or angular velocity)
@@ -180,11 +175,8 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
 
     // Voice command callback
     void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
-        if (eventData.Command.Keyword.ToLower() == "stop") {
-            stopCmds();
-        } else if (eventData.Command.Keyword.ToLower() == "restart") {
-            restartCmds();
-        }
+        if (eventData.Command.Keyword.ToLower() == "stop") stopCmds();
+        else if (eventData.Command.Keyword.ToLower() == "restart") restartCmds();
     }
 
     // Return private pose variables
@@ -194,6 +186,7 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
             return (x, z, theta);
         }
         return (0, 0, 404);
+        //return (1, 1, 0); // testing
     }
 
 #region ButtonControl

@@ -1,5 +1,4 @@
 // Navigation marker interction events
-
 using UnityEngine;
 
 public class SelfInteract : MonoBehaviour {
@@ -7,11 +6,7 @@ public class SelfInteract : MonoBehaviour {
     public static event FocusEvent removeMe;
     public static event FocusEvent ignoreMe;
 
-    public void onHover() {
-        removeMe.Invoke(this);
-    }
+    public void onHover() { removeMe.Invoke(this); }
 
-    public void onHoverExit() {
-        ignoreMe.Invoke(this);
-    }
+    public void onHoverExit() { ignoreMe.Invoke(this); }
 }

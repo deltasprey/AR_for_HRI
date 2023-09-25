@@ -7,10 +7,12 @@ using UnityEngine;
 public class JoystickControl : MonoBehaviour {
     public Transform Base, Top;
     public bool isGrabbed { get; private set; } = false;
+    public bool stopped { private get; set; } = true;
     public Vector3 rotation { get; private set; }
-    public float deadZone = 0.05f;
-    public TMP_Text forward, right;
 
+    [SerializeField] private float deadZone = 0.05f;
+    [SerializeField] private TMP_Text forward, right;
+    [SerializeField] private GameObject stop, go;
     [SerializeField] private bool attachToHand = false;
     private bool tracking = false;
     private Vector3 topPos, topRot;
@@ -26,6 +28,7 @@ public class JoystickControl : MonoBehaviour {
     private void Update() {
         Base.LookAt(Top);
         Base.localEulerAngles = new Vector3(Base.localEulerAngles.x, Base.localEulerAngles.y, 0);
+        transform.localEulerAngles = new Vector3(-110, Camera.main.transform.rotation.eulerAngles.y, 0);
 
         if (isGrabbed) {
             // Update public var with joystick's rotation when its rotation exceeds the deadzone
@@ -53,26 +56,30 @@ public class JoystickControl : MonoBehaviour {
         right.text = "Right\n" + rotation.y.ToString("F3");
 
         if (attachToHand) {
-            //if (HandJointUtils.TryGetJointPose(TrackedHandJoint.Palm, Handedness.Left, out pose)) {
-            //    Base.parent.SetPositionAndRotation(pose.Position, pose.Rotation * Quaternion.Euler(-90, -90, 0));
-            //} else {
-            //    Base.parent.localPosition = new Vector3(2, 0, 3);
-            //    Base.parent.localEulerAngles = new Vector3(-90, 0);
-            //}
-            if (!HandJointUtils.TryGetJointPose(TrackedHandJoint.Palm, Handedness.Left, out pose)) {
-                if (tracking) {
-                    StopAllCoroutines();
-                    transform.localPosition = new Vector3(2, 0, 3);
-                    tracking = false;
-                }
-            } else {
+            if (HandJointUtils.TryGetJointPose(TrackedHandJoint.Palm, Handedness.Left, out pose)) {
                 if (!tracking) {
+                    StopAllCoroutines();
                     transform.position = pose.Position;
                     tracking = true;
                     StartCoroutine(trackHand());
                 }
+            } else {
+                if (tracking) {
+                    tracking = false;
+                }
             }
-            transform.localEulerAngles = new Vector3(-90, 0, Camera.main.transform.rotation.eulerAngles.y);
+        }
+
+        if (stopped) {
+            if (go.activeSelf) {
+                stop.SetActive(true);
+                go.SetActive(false);
+            }
+        } else {
+            if (stop.activeSelf) {
+                stop.SetActive(false);
+                go.SetActive(true);
+            }
         }
     }
 
@@ -88,9 +95,15 @@ public class JoystickControl : MonoBehaviour {
         while (tracking) {
             transform.position = Vector3.MoveTowards(transform.position, 
                                                      pose.Position,
-                                                     Mathf.Max(Vector3.Magnitude(transform.position - pose.Position)/5, 0.01f));
+                                                     Mathf.Max(Vector3.Magnitude(transform.position - pose.Position)/6, 0.01f));
             yield return new WaitForSeconds(0.005f);
         }
+
+        // Delay if hand tracking lost
+        while (isGrabbed) yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(2);
+        if (tracking) yield return null;
+        transform.localPosition = new Vector3(2, 0, 3);
         yield return null;
     }
 }

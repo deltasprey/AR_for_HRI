@@ -2,13 +2,10 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Microsoft.MixedReality.Toolkit;
-using Microsoft.MixedReality.Toolkit.Input;
 using Unity.VisualScripting;
 using QRTracking;
-using System;
 
-public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
+public class LocMarkerManager : MonoBehaviour { //, IMixedRealitySpeechHandler {
     public QRCode qr;
     public GameObject simpleGUI, complexGUI;
     public Material sphere;
@@ -19,26 +16,23 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     public TMP_InputField moveX, moveY, moveZ, rotX, rotY, rotZ;
     public Button simpleSaveButton, complexSaveButton;
 
-    private QRCodesManager qrManager;
     private Transform player, origParent;
     private CmdVelControl rosPose;
     private Vector3 position, offset;
     private Quaternion rotation;
-    private Matrix4x4 rotationMatrix, transformationMatrix;
+    private Matrix4x4 rotationMatrix; //, transformationMatrix;
 
     private readonly float[] moveAmounts = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.5f };
     private readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
     private float moveAmount, localiserScale, safetyScale, offsetTheta;
     private uint rotateAmount;
-    private bool track = false, trackScale = true, initialised = false;
+    private bool trackScale = true, initialised = false; //, track = false;
 
     private void Start() {
         // Marker positioning initialisation
         player = Camera.main.transform;
         origParent = transform.parent;
         rosPose = FindObjectOfType<CmdVelControl>();
-        //print(rosPose.linearSpeed);
-        Invoke(nameof(markerMoved), 0.5f);
 
         // UI initialisation
         localiserScale = localiser.localScale.x * 100;
@@ -58,8 +52,6 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         StartCoroutine(alphaUp());
 
         // QR code reading
-        qrManager = FindObjectOfType<QRCodesManager>();
-        qrManager.QRCodeUpdated += qrPositionMoved;
         print(qr.CodeText);
         if (qr.CodeText.Length > 0 && qr.CodeText[0] == '(' && qr.CodeText[^1] == ')') {
             if (qr.CodeText.CountIndices(',') == 2) {
@@ -67,7 +59,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
                 string[] codeVals = qr.CodeText[1..^1].Split(',');
                 QROffset(float.Parse(codeVals[0]), float.Parse(codeVals[1]), float.Parse(codeVals[2]));
             } else if (qr.CodeText.CountIndices(',') == 5) {
-                print("Offset and rotation");
+                print("Offset and Rotation");
                 string[] codeVals = qr.CodeText[1..^1].Split(',');
                 QROffsetRotation(float.Parse(codeVals[0]), float.Parse(codeVals[1]), float.Parse(codeVals[2]),
                                  float.Parse(codeVals[3]), float.Parse(codeVals[4]), float.Parse(codeVals[5]));
@@ -75,7 +67,7 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         } 
     }
 
-    private void Update() {
+    private void Update() {        
         if (localiser.localScale.x * 100 != localiserScale && trackScale) {
             simpleScaleSlider.value = localiserScale;
             complexScaleSlider.value = localiserScale;
@@ -88,53 +80,52 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
             complexSafetySliderText.text = safetyScale.ToString();
         }
         
-        if (track) {
-            if (!rotX.isFocused) {
-                rotX.text = localiser.eulerAngles.x.ToString("F3");
-            }
-            if (!rotY.isFocused) {
-                rotY.text = (localiser.eulerAngles.y - worldMarker.eulerAngles.y).ToString("F3");
-            }
-            if (!rotZ.isFocused) {
-                rotZ.text = localiser.eulerAngles.z.ToString("F3");
-            }
-        }
+        //if (track) {
+        //    if (!rotX.isFocused) {
+        //        rotX.text = localiser.eulerAngles.x.ToString("F3");
+        //    }
+        //    if (!rotY.isFocused) {
+        //        rotY.text = (localiser.eulerAngles.y - worldMarker.eulerAngles.y).ToString("F3");
+        //    }
+        //    if (!rotZ.isFocused) {
+        //        rotZ.text = localiser.eulerAngles.z.ToString("F3");
+        //    }
+        //}
 
-        transform.position = worldMarker.position;
-        transform.LookAt(new Vector3(player.position.x, player.position.y, player.position.z));
+        transform.position = new Vector3(worldMarker.position.x, (player.position.y + worldMarker.position.y)/2, worldMarker.position.z);
+        transform.LookAt(player);
         transform.forward *= -1;
-        simpleGUI.transform.LookAt(new Vector3(player.position.x, player.position.y, player.position.z));
+        simpleGUI.transform.LookAt(player);
         simpleGUI.transform.forward *= -1;
-        complexGUI.transform.LookAt(new Vector3(player.position.x, player.position.y, player.position.z));
+        complexGUI.transform.LookAt(player);
         complexGUI.transform.forward *= -1;
     }
 
     private void OnEnable() {
-        CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
+        //CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
         CmdVelControl.msgValueChanged += moveMarker;
-        
-        // QRCodesManager.QRCodeUpdated += moveMarker;
+        QRCodesManager.Instance.QRCodeUpdated += qrPositionMoved;
     }
 
     private void OnDisable() {
-        try {
-            CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this);
-        } catch { }
+        //try { CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this); } catch { }
         CmdVelControl.msgValueChanged -= moveMarker;
+        try { QRCodesManager.Instance.QRCodeUpdated -= qrPositionMoved; } catch { }
     }
 
     private void QROffset(float x, float y, float z) {
-        localiser.position = new Vector3(worldMarker.position.x + x, worldMarker.position.y + y, worldMarker.position.z + z);
+        //localiser.position = worldMarker.position + new Vector3(x, y, z);
+        localiser.position = worldMarker.position + localiser.forward * x + localiser.up * y + localiser.right * z;
         moveX.text = (x - worldMarker.position.x).ToString();
         moveY.text = (y - worldMarker.position.y).ToString();
         moveZ.text = (z - worldMarker.position.z).ToString();
     }
 
     private void QROffsetRotation(float x, float y, float z, float rx, float ry, float rz) {
-        localiser.SetPositionAndRotation(new Vector3(worldMarker.position.x + x, worldMarker.position.y + y, worldMarker.position.z + z), Quaternion.Euler(rx, ry, rz));
-        moveX.text = (x - worldMarker.position.x).ToString();
-        moveY.text = (y - worldMarker.position.y).ToString();
-        moveZ.text = (z - worldMarker.position.z).ToString();
+        //localiser.SetPositionAndRotation(worldMarker.position + new Vector3(x, y, z), 
+        //                                 Quaternion.Euler(rx, worldMarker.rotation.y + ry, rz));
+        localiser.eulerAngles = new Vector3(rx, worldMarker.eulerAngles.y + ry, rz);
+        QROffset(x, y, z);
         rotX.text = rx.ToString();
         rotY.text = (ry - worldMarker.eulerAngles.y).ToString();
         rotZ.text = rz.ToString();
@@ -144,14 +135,12 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
     private void moveMarker(float x, float z, float theta) {
         if (initialised) {
             worldMarker.SetParent(localiser);
-            position = rotationMatrix.MultiplyPoint(new Vector3(x, 0, z)) + offset;
+            position = rotationMatrix.MultiplyPoint3x4(new Vector3(x, 0, z)) + offset;
             //position = transformationMatrix.MultiplyPoint(new Vector3(x, 0, z));
             rotation = Quaternion.Euler(0, theta + offsetTheta, 0); //* Mathf.Rad2Deg - 90
             localiser.SetPositionAndRotation(position, rotation);
             worldMarker.SetParent(origParent);
-        } else {
-            markerMoved();
-        }
+        } else markerMoved();
     }
 
     // Calculate offset between virtual marker and robot pose
@@ -164,9 +153,6 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
             rotationMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.Inverse(Quaternion.Euler(0, theta, 0)) * botRot, Vector3.one);
             offset = localiser.position - rotationMatrix.MultiplyPoint(new Vector3(x, 0, z));
-
-            initialised = true;
-            moveMarker(x, z, theta);
 
             //Quaternion rotationAB = Quaternion.Inverse(Quaternion.Euler(0, theta, 0)) * botRot;
             //Matrix4x4 rotationMatrix = Matrix4x4.TRS(Vector3.zero, rotationAB, Vector3.one);
@@ -186,20 +172,24 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
             //Debug.Log($"Transformation matrix\n: {transformationMatrix}");
             //Debug.Log($"Projected Position: {transformationMatrix.MultiplyPoint(new Vector3(x, 0, z))}");
+
+            initialised = true;
+            moveMarker(x, z, theta);
         }
     }
 
     private void qrPositionMoved(object sender, QRCodeEventArgs<Microsoft.MixedReality.QR.QRCode> e) {
+        print("qrPositionMoved");
         markerMoved();
     }
 
-    void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
-        if (eventData.Command.Keyword.ToLower() == "track marker") {
-            track = true;
-        } else if (eventData.Command.Keyword.ToLower() == "lock marker") {
-            track = false;
-        }
-    }
+    //void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
+    //    if (eventData.Command.Keyword.ToLower() == "track marker") {
+    //        track = true;
+    //    } else if (eventData.Command.Keyword.ToLower() == "lock marker") {
+    //        track = false;
+    //    }
+    //}
 
     #region Marker Object UI Control
     // View virtual marker in sphere mode
@@ -263,36 +253,24 @@ public class LocMarkerManager : MonoBehaviour, IMixedRealitySpeechHandler {
         complexGUI.SetActive(true);
     }
 
-    public void changeMoveAmount() {
-        moveAmount = moveAmounts[moveStep.value];
-    }
+    public void changeMoveAmount() { moveAmount = moveAmounts[moveStep.value]; }
 
-    public void changeRotateAmount() {
-        rotateAmount = rotateAmounts[rotateStep.value];
-    }
+    public void changeRotateAmount() { rotateAmount = rotateAmounts[rotateStep.value]; }
 
     public void increaseMoveAmount() {
-        if (moveStep.value < moveAmounts.Length - 1) {
-            moveAmount = moveAmounts[++moveStep.value];
-        }
+        if (moveStep.value < moveAmounts.Length - 1) moveAmount = moveAmounts[++moveStep.value];
     }
 
     public void decreaseMoveAmount() {
-        if (moveStep.value > 0) {
-            moveAmount = moveAmounts[--moveStep.value];
-        }
+        if (moveStep.value > 0) moveAmount = moveAmounts[--moveStep.value];
     }
 
     public void increaseRotateAmount() {
-        if (rotateStep.value < moveAmounts.Length - 1) {
-            rotateAmount = rotateAmounts[++rotateStep.value];
-        }
+        if (rotateStep.value < moveAmounts.Length - 1) rotateAmount = rotateAmounts[++rotateStep.value];
     }
 
     public void decreaseRotateAmount() {
-        if (rotateStep.value > 0) {
-            rotateAmount = rotateAmounts[--rotateStep.value];
-        }
+        if (rotateStep.value > 0) rotateAmount = rotateAmounts[--rotateStep.value];
     }
 
     public void changeMoveX() {

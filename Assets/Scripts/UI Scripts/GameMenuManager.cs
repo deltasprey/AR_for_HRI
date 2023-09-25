@@ -12,30 +12,25 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
     private bool navigating = false;
 
-    private void OnEnable() {
-        CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
-    }
+    private void OnEnable() { CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this); }
 
     private void OnDisable() {
-        try {
-            CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this);
-        } catch { }
+        try { CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this); } catch { }
     }
 
-    private void Start() {
-        CoreServices.SpatialAwarenessSystem.Disable();
-    }
+    private void Start() { CoreServices.SpatialAwarenessSystem.Disable(); }
 
     private void Update() {
+#if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.M)) {
             toggleMenu();
         }
+#endif
         if (menu.activeSelf) {
             menu.transform.LookAt(new Vector3(player.position.x, player.position.y, player.position.z));
             menu.transform.forward *= -1;
-            if (follow) {
+            if (follow)
                 menu.transform.position = player.position + new Vector3(player.forward.x, player.forward.y, player.forward.z).normalized * spawnDistance;
-            }
         }
     }
 
@@ -45,16 +40,11 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
     }
 
     public void toggleSpatialAwareness() {
-        if (toggle.isOn) {
-            CoreServices.SpatialAwarenessSystem.Enable();
-        } else {
-            CoreServices.SpatialAwarenessSystem.Disable();
-        }
+        if (toggle.isOn) CoreServices.SpatialAwarenessSystem.Enable();
+        else CoreServices.SpatialAwarenessSystem.Disable();
     }
 
-    public void toggleMenuFollow() {
-        follow = !follow;
-    }
+    public void toggleMenuFollow() { follow = !follow; }
 
     public void toggleNavigation() {
         if (navigating) {
@@ -70,15 +60,10 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
         }
     }
 
-    public void exitApp() {
-        Application.Quit();
-    }
+    public void exitApp() { Application.Quit(); }
 
     void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
-        if (eventData.Command.Keyword.ToLower() == "menu") {
-            toggleMenu();
-        } else if (eventData.Command.Keyword.ToLower() == "toggle navigation") {
-            toggleNavigation();
-        }
+        if (eventData.Command.Keyword.ToLower() == "menu") toggleMenu();
+        else if (eventData.Command.Keyword.ToLower() == "toggle navigation") toggleNavigation();
     }
 }

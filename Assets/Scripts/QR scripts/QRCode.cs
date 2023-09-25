@@ -31,7 +31,7 @@ namespace QRTracking {
         // Use this for initialization
         void Start() {
             PhysicalSize = 0.1f;
-            CodeText = "Dummy";
+            CodeText = "(0.2,0,0,0,180,0)";
             if (qrCode == null) {
                 throw new System.Exception("QR Code Empty");
             }
@@ -83,6 +83,7 @@ namespace QRTracking {
 
         // Update is called once per frame
         void Update() {
+            // Prevents null reference exceptions {Added by Torsten Sprey}
             if (qrCodeCube != null) {
                 UpdatePropertiesDisplay();
             }
