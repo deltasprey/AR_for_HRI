@@ -1,21 +1,16 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
+﻿using UnityEngine;
 #if WINDOWS_UWP
-
 using Windows.Perception.Spatial;
-
 #endif
+
 namespace QRTracking {
     [RequireComponent(typeof(QRTracking.SpatialGraphCoordinateSystem))]
     public class QRCode : MonoBehaviour {
         public Microsoft.MixedReality.QR.QRCode qrCode;
-        private GameObject qrCodeCube;
-
         public float PhysicalSize { get; private set; }
         public string CodeText { get; private set; }
 
+        private GameObject qrCodeCube;
         private TextMesh QRID;
         private TextMesh QRNodeID;
         private TextMesh QRText;
@@ -31,7 +26,7 @@ namespace QRTracking {
         // Use this for initialization
         void Start() {
             PhysicalSize = 0.1f;
-            CodeText = "(0.2,0,0,0,180,0)";
+            CodeText = "(.13,,.06,,180,)";
             if (qrCode == null) {
                 throw new System.Exception("QR Code Empty");
             }

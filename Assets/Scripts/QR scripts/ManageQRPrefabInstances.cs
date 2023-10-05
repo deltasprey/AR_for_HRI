@@ -31,7 +31,7 @@ public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler
 
     private void spawnMarker() {
         GameObject qrCodePrefab = visualizer.qrCodePrefab;
-        Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.identity);
+        Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.Euler(200, 45, 0));
     }
 #endif
 

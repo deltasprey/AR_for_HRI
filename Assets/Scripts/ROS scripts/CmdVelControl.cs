@@ -8,6 +8,7 @@ using Microsoft.MixedReality.Toolkit;
 public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
     public JoystickControl joystick;
     public HandController handControl;
+    public PurePursuit purePursuit;
     //public  trackPad
     public Transform bot;
     //public string botSubscribeTopic = "/turtle1/pose";
@@ -60,6 +61,10 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
             if (joystick.isGrabbed) {
                 forwardSpeed = joystick.rotation.x * linearSpeed;
                 angularSpeed = joystick.rotation.y * turnSpeed;
+                isGrabbed = true;
+            } else if (purePursuit.navigating) {
+                forwardSpeed = purePursuit.forward * linearSpeed;
+                angularSpeed = purePursuit.turn * turnSpeed;
                 isGrabbed = true;
             } else if (handControl.tracking) {
                 forwardSpeed = handControl.rotation.x * linearSpeed;

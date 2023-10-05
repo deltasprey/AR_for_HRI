@@ -4023,7 +4023,7 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
-        m_CallState: 2
+        m_CallState: 0
       - m_Target: {fileID: 5731539861910673984}
         m_TargetAssemblyTypeName: ManageQRPrefabInstances, Assembly-CSharp
         m_MethodName: InvokeClearMarkers
@@ -4749,7 +4749,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 178153750}
   m_Direction: 0
   m_Value: 1
-  m_Size: 0.9999999
+  m_Size: 0.9999998
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -31820,9 +31820,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   joystick: {fileID: 1148746190}
   handControl: {fileID: 361668893}
+  purePursuit: {fileID: 1618608374}
   bot: {fileID: 81050481}
-  linearSpeed: 1
-  turnSpeed: 2
+  linearSpeed: 0.5
+  turnSpeed: 1
   stopOnLoad: 1
 --- !u!1 &1153107431
 GameObject:
@@ -34662,8 +34663,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1618608371}
-  - component: {fileID: 1618608372}
   - component: {fileID: 1618608373}
+  - component: {fileID: 1618608372}
+  - component: {fileID: 1618608374}
   m_Layer: 0
   m_Name: NavManager
   m_TagString: Untagged
@@ -34799,6 +34801,18 @@ LineRenderer:
     generateLightingData: 0
   m_UseWorldSpace: 1
   m_Loop: 0
+--- !u!114 &1618608374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1618608369}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d468259b0715e448946b59b7a779d90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1622016138
 GameObject:
   m_ObjectHideFlags: 0
@@ -37457,7 +37471,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.0000014234192}
+  m_AnchoredPosition: {x: 0, y: 0.000014145078}
   m_SizeDelta: {x: 0, y: 84}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1844186766
@@ -42074,7 +42088,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6913747792194637748}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.2, z: 1}
+  m_LocalPosition: {x: 0, y: 0.1, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -42133,7 +42147,7 @@ RectTransform:
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -42226,8 +42240,8 @@ RectTransform:
   m_Father: {fileID: 6913747793018260444}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -43020,7 +43034,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &6913747794128442209
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 #if WINDOWS_UWP
 using Windows.Perception.Spatial;
 using Microsoft.MixedReality.OpenXR;
@@ -12,7 +10,11 @@ namespace QRTracking {
 #if WINDOWS_UWP
         private SpatialCoordinateSystem CoordinateSystem = null;
 #endif
+        private Quaternion rotation;
+        private Vector3 translation;
+        private Pose prevPose;
         private System.Guid id;
+        
         public System.Guid Id {
             get {
                 return id;
@@ -30,17 +32,13 @@ namespace QRTracking {
             }
         }
 
-        void Awake() {
-        }
-
         // Use this for initialization
         void Start() {
+            prevPose = new(Vector3.zero, Quaternion.identity);
 #if WINDOWS_UWP
-            if (CoordinateSystem == null)
-            {
+            if (CoordinateSystem == null) {
                 CoordinateSystem = Windows.Perception.Spatial.Preview.SpatialGraphInteropPreview.CreateCoordinateSystemForNode(id);
-                if (CoordinateSystem == null)
-                {
+                if (CoordinateSystem == null) {
                     Debug.Log("Id= " + id + " Failed to acquire coordinate system");
                 }
             }
@@ -50,21 +48,15 @@ namespace QRTracking {
         private void UpdateLocation() {
             {
 #if WINDOWS_UWP
-                if (CoordinateSystem == null)
-                {
+                if (CoordinateSystem == null) {
                     CoordinateSystem = Windows.Perception.Spatial.Preview.SpatialGraphInteropPreview.CreateCoordinateSystemForNode(id);
 
-                    if (CoordinateSystem == null)
-                    {
+                    if (CoordinateSystem == null) {
                         Debug.Log("Id= " + id + " Failed to acquire coordinate system");
                     }
                 }
 
-                if (CoordinateSystem != null)
-                {
-                    Quaternion rotation = Quaternion.identity;
-                    Vector3 translation = new Vector3(0.0f, 0.0f, 0.0f);
-                    
+                if (CoordinateSystem != null) {
                     //System.IntPtr rootCoordnateSystemPtr = UnityEngine.XR.WindowsMR.WindowsMREnvironment.OriginSpatialCoordinateSystem;
                     //SpatialCoordinateSystem rootSpatialCoordinateSystem = (SpatialCoordinateSystem)System.Runtime.InteropServices.Marshal.GetObjectForIUnknown(rootCoordnateSystemPtr);
                     SpatialCoordinateSystem rootSpatialCoordinateSystem = PerceptionInterop.GetSceneCoordinateSystem(UnityEngine.Pose.identity) as SpatialCoordinateSystem;
@@ -72,12 +64,11 @@ namespace QRTracking {
                     // Get the relative transform from the unity origin
                     System.Numerics.Matrix4x4? relativePose = CoordinateSystem.TryGetTransformTo(rootSpatialCoordinateSystem);
 
-                    if (relativePose != null)
-                    {
+                    if (relativePose != null) {
                         System.Numerics.Vector3 scale;
                         System.Numerics.Quaternion rotation1;
                         System.Numerics.Vector3 translation1;
-       
+
                         System.Numerics.Matrix4x4 newMatrix = relativePose.Value;
 
                         // Platform coordinates are all right handed and unity uses left handed matrices. so we convert the matrix
@@ -94,30 +85,29 @@ namespace QRTracking {
                         System.Numerics.Matrix4x4.Decompose(newMatrix, out scale, out rotation1, out translation1);
                         translation = new Vector3(translation1.X, translation1.Y, translation1.Z);
                         rotation = new Quaternion(rotation1.X, rotation1.Y, rotation1.Z, rotation1.W);
-                        Pose pose = new Pose(translation, rotation);
+                        Pose pose = new(translation, rotation);
 
                         // If there is a parent to the camera that means we are using teleport and we should not apply the teleport
                         // to these objects so apply the inverse
-                        if (CameraCache.Main.transform.parent != null)
-                        {
+                        if (CameraCache.Main.transform.parent != null) {
                             pose = pose.GetTransformedBy(CameraCache.Main.transform.parent);
                         }
 
-                        gameObject.transform.SetPositionAndRotation(pose.position, pose.rotation);
+                        if ((pose.position - prevPose.position).magnitude > 0.01 || (pose.rotation.eulerAngles - prevPose.rotation.eulerAngles).magnitude > 1) {
+                            transform.SetPositionAndRotation(pose.position, pose.rotation);
+                        }
                         //Debug.Log("Id= " + id + " QRPose = " +  pose.position.ToString("F7") + " QRRot = "  +  pose.rotation.ToString("F7"));
+                        prevPose = pose;
+                    } else {
+                        // Debug.Log("Id= " + id + " Unable to locate qrcode" );
                     }
-                    else
-                    {
-                       // Debug.Log("Id= " + id + " Unable to locate qrcode" );
-                    }
-                }
-                else
-                {
-                   gameObject.SetActive(false);
+                } else {
+                    gameObject.SetActive(false);
                 }
 #endif
             }
         }
+
         // Update is called once per frame
         void Update() {
             UpdateLocation();
