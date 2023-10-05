@@ -5,7 +5,7 @@ namespace QRTracking {
     public class QRCodesVisualizer : MonoBehaviour {
         public GameObject qrCodePrefab;
 
-        private System.Collections.Generic.SortedDictionary<System.Guid, GameObject> qrCodesObjectsList;
+        private SortedDictionary<System.Guid, GameObject> qrCodesObjectsList;
         private bool clearExisting = false;
 
         struct ActionData {
@@ -23,12 +23,11 @@ namespace QRTracking {
             }
         }
 
-        private System.Collections.Generic.Queue<ActionData> pendingActions = new Queue<ActionData>();
+        private Queue<ActionData> pendingActions = new();
 
         // Use this for initialization
         void Start() {
             Debug.Log("QRCodesVisualizer start");
-
             qrCodesObjectsList = new SortedDictionary<System.Guid, GameObject>();
 
             QRCodesManager.Instance.QRCodesTrackingStateChanged += Instance_QRCodesTrackingStateChanged;
@@ -39,15 +38,21 @@ namespace QRTracking {
                 throw new System.Exception("Prefab not assigned");
             }
         }
-        private void Instance_QRCodesTrackingStateChanged(object sender, bool status) {
-            if (!status) {
-                clearExisting = true;
+
+        private void OnDisable() {
+            foreach (var obj in qrCodesObjectsList) {
+                Destroy(obj.Value);
             }
+            qrCodesObjectsList.Clear();
+            pendingActions.Clear();
+        }
+
+        private void Instance_QRCodesTrackingStateChanged(object sender, bool status) {
+            if (!status) clearExisting = true;
         }
 
         private void Instance_QRCodeAdded(object sender, QRCodeEventArgs<Microsoft.MixedReality.QR.QRCode> e) {
             Debug.Log("QRCodesVisualizer Instance_QRCodeAdded");
-
             lock (pendingActions) {
                 pendingActions.Enqueue(new ActionData(ActionData.Type.Added, e.Data));
             }
@@ -55,7 +60,6 @@ namespace QRTracking {
 
         private void Instance_QRCodeUpdated(object sender, QRCodeEventArgs<Microsoft.MixedReality.QR.QRCode> e) {
             Debug.Log("QRCodesVisualizer Instance_QRCodeUpdated");
-
             lock (pendingActions) {
                 pendingActions.Enqueue(new ActionData(ActionData.Type.Updated, e.Data));
             }
@@ -63,7 +67,6 @@ namespace QRTracking {
 
         private void Instance_QRCodeRemoved(object sender, QRCodeEventArgs<Microsoft.MixedReality.QR.QRCode> e) {
             Debug.Log("QRCodesVisualizer Instance_QRCodeRemoved");
-
             lock (pendingActions) {
                 pendingActions.Enqueue(new ActionData(ActionData.Type.Removed, e.Data));
             }
@@ -89,6 +92,7 @@ namespace QRTracking {
                         if (qrCodesObjectsList.ContainsKey(action.qrCode.Id)) {
                             Destroy(qrCodesObjectsList[action.qrCode.Id]);
                             qrCodesObjectsList.Remove(action.qrCode.Id);
+                            print("QR destroyed");
                         }
                     }
                 }
@@ -99,7 +103,6 @@ namespace QRTracking {
                     Destroy(obj.Value);
                 }
                 qrCodesObjectsList.Clear();
-
             }
         }
 
@@ -108,5 +111,4 @@ namespace QRTracking {
             HandleEvents();
         }
     }
-
 }

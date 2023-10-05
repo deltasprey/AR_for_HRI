@@ -5,10 +5,12 @@ using QRTracking;
 using System.Collections;
 
 public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler {
-    public QRCodesManager manager;
-    public QRCodesVisualizer visualizer;
+    private QRCodesManager manager;
+    private QRCodesVisualizer visualizer;
     
     private void OnEnable() {
+        manager = GetComponent<QRCodesManager>();
+        visualizer = GetComponent<QRCodesVisualizer>();
         CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
         manager.QRCodesTrackingStateChanged += Instance_QRCodesTrackingStateChanged;
     }
@@ -37,8 +39,13 @@ public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler
         clearMarkers();
     }
 
+    public void InvokeClearMarkers() {
+        clearMarkers();
+    }
+
     private void clearMarkers() {
         print("Clearing QR Markers");
+        visualizer.enabled = false;
         manager.StopQRTracking();
     }
 
@@ -55,6 +62,7 @@ public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler
 
     IEnumerator restartQR() {
         yield return new WaitForSeconds(1);
+        visualizer.enabled = true;
         manager.StartQRTracking();
         yield return null;
     }

@@ -111,7 +111,6 @@ namespace QRTracking {
 
         private void QRCodeWatcher_Removed(object sender, QRCodeRemovedEventArgs args) {
             Debug.Log("QRCodesManager QRCodeWatcher_Removed");
-
             bool found = false;
             lock (qrCodesList) {
                 if (qrCodesList.ContainsKey(args.Code.Id)) {
@@ -133,7 +132,6 @@ namespace QRTracking {
             //Debug.Log($"Time since last detected {(DateTime.Now - args.Code.LastDetectedTime).TotalSeconds} seconds");
             if ((DateTime.Now - args.Code.LastDetectedTime).TotalSeconds < (DateTime.Now - startupTime).TotalSeconds) {
                 Debug.Log("QRCodesManager QRCodeWatcher_Updated");
-
                 bool found = false;
                 lock (qrCodesList) {
                     if (qrCodesList.ContainsKey(args.Code.Id)) {
@@ -151,22 +149,21 @@ namespace QRTracking {
         }
 
         private void QRCodeWatcher_Added(object sender, QRCodeAddedEventArgs args) {
-            if ((DateTime.Now - args.Code.LastDetectedTime).TotalSeconds < (DateTime.Now - startupTime).TotalSeconds) {
-                Debug.Log("QRCodesManager QRCodeWatcher_Added");
+            Debug.Log("QRCodesManager QRCodeWatcher_Added");
+            lock (qrCodesList) {
+                qrCodesList[args.Code.Id] = args.Code;
+            }
 
-                lock (qrCodesList) {
-                    qrCodesList[args.Code.Id] = args.Code;
-                }
+            if ((DateTime.Now - args.Code.LastDetectedTime).TotalSeconds < (DateTime.Now - startupTime).TotalSeconds) {
                 var handlers = QRCodeAdded;
                 if (handlers != null) {
+                    Debug.Log("QRCodesManager QRCodeWatcher_Added_EventFired");
                     handlers(this, QRCodeEventArgs.Create(args.Code));
                 }
             }
         }
 
-        private void QRCodeWatcher_EnumerationCompleted(object sender, object e) {
-            Debug.Log("QRCodesManager QrTracker_EnumerationCompleted");
-        }
+        private void QRCodeWatcher_EnumerationCompleted(object sender, object e) { Debug.Log("QRCodesManager QrTracker_EnumerationCompleted"); }
 
         private void Update() {
             if (qrTracker == null && capabilityInitialized && IsSupported) {

@@ -4024,6 +4024,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 5731539861910673984}
+        m_TargetAssemblyTypeName: ManageQRPrefabInstances, Assembly-CSharp
+        m_MethodName: InvokeClearMarkers
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &309844597
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4737,7 +4749,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 178153750}
   m_Direction: 0
   m_Value: 1
-  m_Size: 0.9999998
+  m_Size: 0.9999999
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -30373,7 +30385,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Fireworks
+  m_text: Clear Markers
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -30400,8 +30412,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 18
+  m_fontSizeBase: 18
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -37445,7 +37457,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000017533694}
+  m_AnchoredPosition: {x: 0, y: -0.0000014234192}
   m_SizeDelta: {x: 0, y: 84}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1844186766
@@ -42054,8 +42066,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3414ec80021beb14ca2b9d656ccfcab7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  manager: {fileID: 4908586972441214967}
-  visualizer: {fileID: 5731539861910673983}
 --- !u!4 &6913747792194637738
 Transform:
   m_ObjectHideFlags: 0

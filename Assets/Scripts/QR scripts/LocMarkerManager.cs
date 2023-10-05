@@ -26,7 +26,7 @@ public class LocMarkerManager : MonoBehaviour { //, IMixedRealitySpeechHandler {
     private readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
     private float moveAmount, localiserScale, safetyScale, offsetTheta;
     private uint rotateAmount;
-    private bool trackScale = true, initialised = false; //, track = false;
+    private bool started = false, trackScale = true, initialised = false; //, track = false;
 
     private void Start() {
         // Marker positioning initialisation
@@ -64,7 +64,8 @@ public class LocMarkerManager : MonoBehaviour { //, IMixedRealitySpeechHandler {
                 QROffsetRotation(float.Parse(codeVals[0]), float.Parse(codeVals[1]), float.Parse(codeVals[2]),
                                  float.Parse(codeVals[3]), float.Parse(codeVals[4]), float.Parse(codeVals[5]));
             }
-        } 
+        }
+        started = true;
     }
 
     private void Update() {        
@@ -211,31 +212,35 @@ public class LocMarkerManager : MonoBehaviour { //, IMixedRealitySpeechHandler {
 
     // Change the size of the virtual marker
     public void adjustScale() {
-        if (simpleGUI.activeSelf) {
-            localiserScale = simpleScaleSlider.value;
-            complexScaleSlider.value = simpleScaleSlider.value;
-        } else {
-            localiserScale = complexScaleSlider.value;
-            simpleScaleSlider.value = complexScaleSlider.value;
+        if (started) {
+            if (simpleGUI.activeSelf) {
+                localiserScale = simpleScaleSlider.value;
+                complexScaleSlider.value = simpleScaleSlider.value;
+            } else {
+                localiserScale = complexScaleSlider.value;
+                simpleScaleSlider.value = complexScaleSlider.value;
+            }
+            localiser.localScale = Vector3.one * localiserScale/100;
+            simpleScaleSliderText.text = localiserScale.ToString();
+            complexScaleSliderText.text = localiserScale.ToString();
+            adjustSafety();
         }
-        localiser.localScale = Vector3.one * localiserScale/100;
-        simpleScaleSliderText.text = localiserScale.ToString();
-        complexScaleSliderText.text = localiserScale.ToString();
-        adjustSafety();
     }
 
     // Change the size of the safety zone
     public void adjustSafety() {
-        if (simpleGUI.activeSelf) {
-            safetyScale = simpleSafetySlider.value/10;
-            complexSafetySlider.value = simpleSafetySlider.value;
-        } else {
-            safetyScale = complexSafetySlider.value/10;
-            simpleSafetySlider.value = complexSafetySlider.value;
+        if (started) {
+            if (simpleGUI.activeSelf) {
+                safetyScale = simpleSafetySlider.value/10;
+                complexSafetySlider.value = simpleSafetySlider.value;
+            } else {
+                safetyScale = complexSafetySlider.value/10;
+                simpleSafetySlider.value = complexSafetySlider.value;
+            }
+            safetyZone.localScale = Vector3.one * safetyScale/localiserScale * 100;
+            simpleSafetySliderText.text = safetyScale.ToString();
+            complexSafetySliderText.text = safetyScale.ToString();
         }
-        safetyZone.localScale = Vector3.one * safetyScale/localiserScale * 100;
-        simpleSafetySliderText.text = safetyScale.ToString();
-        complexSafetySliderText.text = safetyScale.ToString();
     }
 
     public void sliderSelect() { trackScale = false; }

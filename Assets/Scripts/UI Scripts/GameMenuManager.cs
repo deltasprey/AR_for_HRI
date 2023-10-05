@@ -18,7 +18,14 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
         try { CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this); } catch { }
     }
 
-    private void Start() { CoreServices.SpatialAwarenessSystem.Disable(); }
+    private void Start() { 
+        CoreServices.SpatialAwarenessSystem.Disable();
+
+        if (!PlayerPrefs.HasKey("Updated")) {
+            print("###=== Game Updated ===###");
+            PlayerPrefs.SetInt("Updated", 1);
+        }
+    }
 
     private void Update() {
 #if UNITY_EDITOR
