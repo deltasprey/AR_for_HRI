@@ -7,12 +7,19 @@ using System.Collections;
 public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler {
     private QRCodesManager manager;
     private QRCodesVisualizer visualizer;
+    [SerializeField] private bool spawnOnLoad = false;
     
     private void OnEnable() {
         manager = GetComponent<QRCodesManager>();
         visualizer = GetComponent<QRCodesVisualizer>();
         CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
         manager.QRCodesTrackingStateChanged += Instance_QRCodesTrackingStateChanged;
+
+#if UNITY_EDITOR
+        if (spawnOnLoad) {
+            Invoke(nameof(spawnMarker), 5f);
+        }
+#endif
     }
 
     private void OnDisable() {
@@ -31,7 +38,8 @@ public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler
 
     private void spawnMarker() {
         GameObject qrCodePrefab = visualizer.qrCodePrefab;
-        Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.Euler(200, 45, 0));
+        //Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.Euler(200, 45, 0));
+        Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.identity);
     }
 #endif
 

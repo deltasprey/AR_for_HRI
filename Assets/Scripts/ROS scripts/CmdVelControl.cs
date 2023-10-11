@@ -7,7 +7,7 @@ using Microsoft.MixedReality.Toolkit;
 
 public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
     public JoystickControl joystick;
-    public HandController handControl;
+    //public HandController handControl;
     public PurePursuit purePursuit;
     //public  trackPad
     public Transform bot;
@@ -66,11 +66,11 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
                 forwardSpeed = purePursuit.forward * linearSpeed;
                 angularSpeed = purePursuit.turn * turnSpeed;
                 isGrabbed = true;
-            } else if (handControl.tracking) {
-                forwardSpeed = handControl.rotation.x * linearSpeed;
-                strafeSpeed = handControl.rotation.z * linearSpeed;
-                angularSpeed = handControl.rotation.y * turnSpeed;
-                isGrabbed = true;
+            //} else if (handControl.tracking) {
+            //    forwardSpeed = handControl.rotation.x * linearSpeed;
+            //    strafeSpeed = handControl.rotation.z * linearSpeed;
+            //    angularSpeed = handControl.rotation.y * turnSpeed;
+            //    isGrabbed = true;
             } else if (isGrabbed) {
                 forwardSpeed = 0;
                 angularSpeed = 0;
@@ -195,52 +195,52 @@ public class CmdVelControl : MonoBehaviour, IMixedRealitySpeechHandler {
     }
 
 #region ButtonControl
-    public void forwardPress() {
-        forwardSpeed += linearSpeed;
-    }
+    //public void forwardPress() {
+    //    forwardSpeed += linearSpeed;
+    //}
 
-    public void forwardRelease() {
-        forwardSpeed -= linearSpeed;
-    }
+    //public void forwardRelease() {
+    //    forwardSpeed -= linearSpeed;
+    //}
 
-    public void backwardPress() {
-        forwardSpeed -= linearSpeed;
-    }
+    //public void backwardPress() {
+    //    forwardSpeed -= linearSpeed;
+    //}
 
-    public void backwardRelease() {
-        forwardSpeed += linearSpeed;
-    }
+    //public void backwardRelease() {
+    //    forwardSpeed += linearSpeed;
+    //}
 
-    public void rightPress() {
-        strafeSpeed += linearSpeed;
-    }
+    //public void rightPress() {
+    //    strafeSpeed += linearSpeed;
+    //}
 
-    public void rightRelease() {
-        strafeSpeed -= linearSpeed;
-    }
+    //public void rightRelease() {
+    //    strafeSpeed -= linearSpeed;
+    //}
 
-    public void leftPress() {
-        strafeSpeed -= linearSpeed;
-    }
+    //public void leftPress() {
+    //    strafeSpeed -= linearSpeed;
+    //}
 
-    public void leftRelease() {
-        strafeSpeed += linearSpeed;
-    }
+    //public void leftRelease() {
+    //    strafeSpeed += linearSpeed;
+    //}
 
-    public void clockwisePress() {
-        angularSpeed += turnSpeed;
-    }
+    //public void clockwisePress() {
+    //    angularSpeed += turnSpeed;
+    //}
 
-    public void clockwiseRelease() {
-        angularSpeed -= turnSpeed;
-    }
+    //public void clockwiseRelease() {
+    //    angularSpeed -= turnSpeed;
+    //}
 
-    public void anitclockwisePress() {
-        angularSpeed -= turnSpeed;
-    }
+    //public void anitclockwisePress() {
+    //    angularSpeed -= turnSpeed;
+    //}
 
-    public void anitclockwiseRelease() {
-        angularSpeed += turnSpeed;
-    }
+    //public void anitclockwiseRelease() {
+    //    angularSpeed += turnSpeed;
+    //}
 #endregion
 }
