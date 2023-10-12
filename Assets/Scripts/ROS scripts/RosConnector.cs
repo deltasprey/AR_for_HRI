@@ -39,6 +39,7 @@ namespace RosSharp.RosBridgeClient {
         [SerializeField] private Button connBtn;
 
         private ManualResetEvent IsConnected = new(false);
+        private bool disconnected = false;
 
         public void Awake() {
             serverIP.text = RosBridgeServerUrl[5..RosBridgeServerUrl.LastIndexOf(":")];
@@ -107,15 +108,20 @@ namespace RosSharp.RosBridgeClient {
 
         private void OnClosed(object sender, EventArgs e) {
             Connected = false;
+            disconnected = true;
             Debug.Log("Disconnected from RosBridge: " + RosBridgeServerUrl);
+        }
 
-            // I don't think I can implement this stuff
-            //btnText.text = "Connect";
-            //connBtn.interactable = true;
-            //serverIP.interactable = true;
-            //serverPort.interactable = true;
-            //msgText.text = "Disconnected from RosBridge: " + RosBridgeServerUrl;
-            //msgText.color = new Color(255, 128, 0);
+        private void Update() {
+            if (disconnected) {
+                btnText.text = "Connect";
+                connBtn.interactable = true;
+                serverIP.interactable = true;
+                serverPort.interactable = true;
+                msgText.text = "Disconnected from RosBridge: " + RosBridgeServerUrl;
+                msgText.color = new Color(255, 128, 0);
+                disconnected = false;
+            }
         }
     }
 }

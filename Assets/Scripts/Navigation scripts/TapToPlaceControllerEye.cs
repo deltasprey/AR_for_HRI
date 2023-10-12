@@ -5,6 +5,8 @@ using TMPro;
 using UnityEngine;
 
 public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler {
+    public List<GameObject> markers { get; private set; } = new();
+
     [SerializeField]
     private GameObject _instructionText;
 
@@ -20,7 +22,6 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
     private IMixedRealityEyeGazeProvider EyeGazeProvider;
     private LineRenderer lineRenderer;
     private TextMeshPro _instructionTextMesh;
-    private List<GameObject> markers = new();
     private GameObject lookTarget;
     private string _lookAtSurfaceText;
     private bool place = true;

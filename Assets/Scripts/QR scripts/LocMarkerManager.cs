@@ -5,7 +5,7 @@ using TMPro;
 using Unity.VisualScripting;
 using QRTracking;
 
-public class LocMarkerManager : MonoBehaviour { //, IMixedRealitySpeechHandler {
+public class LocMarkerManager : MonoBehaviour {
     public QRCode qr;
     public GameObject simpleGUI, complexGUI;
     public Material sphere;
@@ -15,7 +15,7 @@ public class LocMarkerManager : MonoBehaviour { //, IMixedRealitySpeechHandler {
     public TMP_Dropdown moveStep, rotateStep;
     public TMP_InputField moveX, moveY, moveZ, rotX, rotY, rotZ;
     public Button simpleSaveButton, complexSaveButton;
-    public Matrix4x4 rotationMatrix { get; private set; } //, transformationMatrix;
+    public Matrix4x4 rotationMatrix { get; private set; }
     public Vector3 offset { get; private set; }
     public float offsetTheta { get; private set; }
 
@@ -28,7 +28,7 @@ public class LocMarkerManager : MonoBehaviour { //, IMixedRealitySpeechHandler {
     private readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
     private float moveAmount, localiserScale, safetyScale;
     private uint rotateAmount;
-    private bool started = false, trackScale = true, initialised = false, qrMoved = false; //, track = false;
+    private bool started = false, trackScale = true, initialised = false, qrMoved = false;
 
     private void Start() {
         // Marker positioning initialisation
@@ -96,13 +96,11 @@ public class LocMarkerManager : MonoBehaviour { //, IMixedRealitySpeechHandler {
     }
 
     private void OnEnable() {
-        //CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
         CmdVelControl.msgValueChanged += moveMarker;
         QRCodesManager.Instance.QRCodeUpdated += qrPositionMoved;
     }
 
     private void OnDisable() {
-        //try { CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this); } catch { }
         CmdVelControl.msgValueChanged -= moveMarker;
         try { QRCodesManager.Instance.QRCodeUpdated -= qrPositionMoved; } catch { }
     }
@@ -130,6 +128,7 @@ public class LocMarkerManager : MonoBehaviour { //, IMixedRealitySpeechHandler {
             }
         }
         started = true;
+        markerMoved();
     }
 
     private void QROffset(float x, float y, float z) {
@@ -183,20 +182,9 @@ public class LocMarkerManager : MonoBehaviour { //, IMixedRealitySpeechHandler {
     }
 
     private void qrPositionMoved(object _, QRCodeEventArgs<Microsoft.MixedReality.QR.QRCode> e) {
-        if (started) {
-            print("qrPositionMoved");
-            qrMoved = true;
-        }
+        if (started) { qrMoved = true; }
     }
 #endregion
-
-    //void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
-    //    if (eventData.Command.Keyword.ToLower() == "track marker") {
-    //        track = true;
-    //    } else if (eventData.Command.Keyword.ToLower() == "lock marker") {
-    //        track = false;
-    //    }
-    //}
 
 #region Marker Object UI Control
     // View virtual marker in sphere mode

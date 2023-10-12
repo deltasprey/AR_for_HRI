@@ -1,10 +1,8 @@
-using Microsoft.MixedReality.Toolkit.Input;
-using Microsoft.MixedReality.Toolkit;
 using UnityEngine;
 using QRTracking;
 using System.Collections;
 
-public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler {
+public class ManageQRPrefabInstances : MonoBehaviour {
     private QRCodesManager manager;
     private QRCodesVisualizer visualizer;
     [SerializeField] private bool spawnOnLoad = false;
@@ -12,7 +10,7 @@ public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler
     private void OnEnable() {
         manager = GetComponent<QRCodesManager>();
         visualizer = GetComponent<QRCodesVisualizer>();
-        CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
+        SpeechManager.AddListener("clear markers", clearMarkers, true);
         manager.QRCodesTrackingStateChanged += Instance_QRCodesTrackingStateChanged;
 
 #if UNITY_EDITOR
@@ -23,7 +21,7 @@ public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler
     }
 
     private void OnDisable() {
-        try { CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this); } catch { }
+        SpeechManager.RemoveListener("clear markers", clearMarkers);
         manager.QRCodesTrackingStateChanged -= Instance_QRCodesTrackingStateChanged;
     }
 
@@ -62,10 +60,6 @@ public class ManageQRPrefabInstances : MonoBehaviour, IMixedRealitySpeechHandler
             print("Restarting QR Tracking");
             StartCoroutine(restartQR());
         }
-    }
-
-    void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
-        if (eventData.Command.Keyword.ToLower() == "clear markers") clearMarkers();
     }
 
     IEnumerator restartQR() {

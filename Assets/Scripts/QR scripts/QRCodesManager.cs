@@ -102,10 +102,7 @@ namespace QRTracking {
                     qrCodesList.Clear();
                 }
 
-                var handlers = QRCodesTrackingStateChanged;
-                if (handlers != null) {
-                    handlers(this, false);
-                }
+                QRCodesTrackingStateChanged?.Invoke(this, false);
             }
         }
 
@@ -119,10 +116,7 @@ namespace QRTracking {
                 }
             }
             if (found) {
-                var handlers = QRCodeRemoved;
-                if (handlers != null) {
-                    handlers(this, QRCodeEventArgs.Create(args.Code));
-                }
+                QRCodeRemoved?.Invoke(this, QRCodeEventArgs.Create(args.Code));
             }
         }
 
@@ -140,10 +134,7 @@ namespace QRTracking {
                     }
                 }
                 if (found) {
-                    var handlers = QRCodeUpdated;
-                    if (handlers != null) {
-                        handlers(this, QRCodeEventArgs.Create(args.Code));
-                    }
+                    QRCodeUpdated?.Invoke(this, QRCodeEventArgs.Create(args.Code));
                 }
             }
         }

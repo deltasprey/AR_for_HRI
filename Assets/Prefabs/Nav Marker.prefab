@@ -467,7 +467,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 3170726556058536345}
         m_TargetAssemblyTypeName: SelfInteract, Assembly-CSharp
-        m_MethodName: NavigateToMe
+        m_MethodName: PathToMe
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -476,7 +476,7 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
-        m_CallState: 0
+        m_CallState: 2
 --- !u!1 &5370464050143315471
 GameObject:
   m_ObjectHideFlags: 0

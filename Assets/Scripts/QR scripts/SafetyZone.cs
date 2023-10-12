@@ -5,9 +5,6 @@ using UnityEngine;
 public class SafetyZone : MonoBehaviour {
     public GameObject handCollider, headCollider;
     public Material zoneMat;
-    public delegate void StopCmd();
-    public static event StopCmd stop;
-    public static event StopCmd restart;
 
     private GameObject rHandObj, lHandObj, headObj;
     private MixedRealityPose pose;
@@ -18,7 +15,7 @@ public class SafetyZone : MonoBehaviour {
         headObj = Instantiate(headCollider, Camera.main.transform);
         rHandObj = Instantiate(handCollider, headObj.transform);
         lHandObj = Instantiate(handCollider, headObj.transform);
-        restart?.Invoke();
+        SpeechManager.InvokeEvent("restart", true);
     }
 
     private void OnDestroy() {
@@ -39,7 +36,7 @@ public class SafetyZone : MonoBehaviour {
         if (other.CompareTag("Player")) {          
             stopped++;
             if (stopped == 1) {
-                stop?.Invoke();
+                SpeechManager.InvokeEvent("stop");
                 zoneMat.SetColor("_Line_Color_", Color.red);
             }
         }
@@ -50,7 +47,7 @@ public class SafetyZone : MonoBehaviour {
         if (stopped > 0 && other.CompareTag("Player")) {
             stopped--;
             if (stopped == 0) {
-                restart?.Invoke();
+                SpeechManager.InvokeEvent("restart", true);
                 zoneMat.SetColor("_Line_Color_", Color.green);
             }
         }

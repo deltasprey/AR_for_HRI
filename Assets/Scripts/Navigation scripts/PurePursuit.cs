@@ -7,22 +7,27 @@ public class PurePursuit : MonoBehaviour {
     public float turn { get; private set; } = 0f;
 
     private LocMarkerManager markerManager;
-    //private TapToPlaceControllerEye navMarkers;
+    private TapToPlaceControllerEye navMarkers;
     private Vector2 rosPos, rosTargetPos2D = Vector2.zero;
     private float rosTheta, targetTheta;
 
-    private void OnEnable() {
+    private void Start() {
         markerManager = FindObjectOfType<LocMarkerManager>();
-        //navMarkers = GetComponent<TapToPlaceControllerEye>();
+        navMarkers = GetComponent<TapToPlaceControllerEye>();
+    }
+
+    private void OnEnable() {
         SelfInteract.navigateToMe += navigate;
+        SelfInteract.pathToMe += path;
         CmdVelControl.msgValueChanged += rosUpdate;
-        SafetyZone.stop += stopCmds;
+        SpeechManager.stop += stopCmds;
     }
 
     private void OnDisable() {
         SelfInteract.navigateToMe -= navigate;
+        SelfInteract.pathToMe -= path;
         CmdVelControl.msgValueChanged -= rosUpdate;
-        SafetyZone.stop -= stopCmds;
+        SpeechManager.stop -= stopCmds;
     }
 
     private void rosUpdate(float x, float z, float theta) {
@@ -40,7 +45,11 @@ public class PurePursuit : MonoBehaviour {
         navigating = false;
     }
 
-    private void navigate(SelfInteract marker) {
+    private void navigate(SelfInteract marker) { initialisePursuit(marker, false); }
+    
+    private void path(SelfInteract marker) { initialisePursuit(navMarkers.markers[0].GetComponent<SelfInteract>(), true); }
+
+    private void initialisePursuit(SelfInteract marker, bool pathing) {
         StopAllCoroutines();
         Vector3 rosTargetPos3D = markerManager.rotationMatrix.inverse.MultiplyPoint(new Vector3(marker.transform.position.x, 0, marker.transform.position.z) - markerManager.offset);
         rosTargetPos2D = new(rosTargetPos3D.z, rosTargetPos3D.x);
@@ -53,26 +62,34 @@ public class PurePursuit : MonoBehaviour {
         navigating = true;
 
         // Start driving
-        StartCoroutine(drive(turnRate));
+        int stopId = int.Parse(marker.label.text);
+        StartCoroutine(drive(turnRate, pathing ? 0 : stopId - 1 , stopId));
     }
     
-    IEnumerator drive(float turnRate) {
-        // Perform inital turn
-        while (Mathf.Abs(targetTheta - rosTheta) > 3) {
-            turn = turnRate;
-            yield return new WaitForSeconds(0.1f);
-        }
-        turn = 0;
+    IEnumerator drive(float turnRate, int startId, int stopId) {
+        for (int i = startId; i < stopId; i++) {
+            // Perform inital turn
+            while (Mathf.Abs(targetTheta - rosTheta) > 3) {
+                turn = turnRate;
+                yield return new WaitForSeconds(0.1f);
+            }
+            turn = 0;
 
-        // Drive to location
-        while ((rosTargetPos2D - rosPos).magnitude > 0.1) {
-            turn = (targetTheta - rosTheta) / 50;
-            forward = 1;
-            yield return new WaitForSeconds(0.1f);
+            // Drive to location
+            while ((rosTargetPos2D - rosPos).magnitude > 0.1) {
+                turn = (targetTheta - rosTheta) / 50;
+                forward = 1;
+                yield return new WaitForSeconds(0.1f);
+            }
+            turn = 0;
+            forward = 0;
+
+            // Switch to next waypoint
+            if (i < stopId - 1) {
+
+            }
         }
 
-        turn = 0;
-        forward = 0;
         navigating = false;
         yield return null;
     }

@@ -1,9 +1,8 @@
-using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
+public class GameMenuManager : MonoBehaviour {
     public GameObject menu, instructionText;
     public Transform player;
     public Toggle toggle;
@@ -12,10 +11,14 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
     private bool navigating = false;
 
-    private void OnEnable() { CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this); }
+    private void OnEnable() {
+        SpeechManager.AddListener("menu", toggleMenu, true);
+        SpeechManager.AddListener("toggle navigation", toggleNavigation, true);
+    }
 
     private void OnDisable() {
-        try { CoreServices.InputSystem.UnregisterHandler<IMixedRealitySpeechHandler>(this); } catch { }
+        SpeechManager.RemoveListener("menu", toggleMenu);
+        SpeechManager.RemoveListener("toggle navigation", toggleNavigation);
     }
 
     private void Start() { 
@@ -68,9 +71,4 @@ public class GameMenuManager : MonoBehaviour, IMixedRealitySpeechHandler {
     }
 
     public void exitApp() { Application.Quit(); }
-
-    void IMixedRealitySpeechHandler.OnSpeechKeywordRecognized(SpeechEventData eventData) {
-        if (eventData.Command.Keyword.ToLower() == "menu") toggleMenu();
-        else if (eventData.Command.Keyword.ToLower() == "toggle navigation") toggleNavigation();
-    }
 }

@@ -10,7 +10,7 @@ namespace QRTracking {
         public float PhysicalSize { get; private set; }
         public string CodeText { get; private set; }
 
-        private GameObject qrCodeCube;
+        //private GameObject qrCodeCube;
         //private TextMesh QRID;
         //private TextMesh QRNodeID;
         //private TextMesh QRText;
@@ -34,7 +34,7 @@ namespace QRTracking {
             PhysicalSize = qrCode.PhysicalSideLength;
             CodeText = qrCode.Data;
 
-            qrCodeCube = gameObject.transform.Find("Cube").gameObject;
+            //qrCodeCube = gameObject.transform.Find("Cube").gameObject;
             //QRInfo = gameObject.transform.Find("QRInfo").gameObject;
             //QRID = QRInfo.transform.Find("QRID").gameObject.GetComponent<TextMesh>();
             //QRNodeID = QRInfo.transform.Find("QRNodeID").gameObject.GetComponent<TextMesh>();
