@@ -9,7 +9,7 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
     [SerializeField] private float maxIndicatorTimer = 1.0f;
     [SerializeField] private Image indicator;
     [SerializeField] private KeyCode selectKey = KeyCode.Mouse0;
-    [SerializeField] private UnityEvent myEvent;
+    [SerializeField] private UnityEvent onClick, onRelease, longClick;
 
     private bool shouldUpdate = false, loopCompleted = false, keyPressed = false;
 
@@ -19,6 +19,8 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
         if (!loopCompleted) {
             if (keyPressed || Input.GetKey(selectKey)) {
                 // Update radial indicator progress in forward direction
+                if (!indicator.enabled)
+                    onClick.Invoke();
                 shouldUpdate = false;
                 indicatorTimer += Time.deltaTime;
                 indicator.enabled = true;
@@ -32,7 +34,7 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
                     loopCompleted = true; // Stop indicator progress from looping
 
                     // Invoke long click event
-                    myEvent.Invoke();
+                    longClick.Invoke();
                 }
             } else if (shouldUpdate) {
                 // Reverse radial indicator direction
@@ -52,6 +54,7 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
         if (Input.GetKeyUp(selectKey)) {
             shouldUpdate = true;
             loopCompleted = false;
+            onRelease.Invoke();
         }
     }
 

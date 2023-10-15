@@ -163,7 +163,7 @@ Material:
     - _StencilReadMask: 255
     - _StencilReference: 0
     - _StencilWriteMask: 255
-    - _Strength: 0.2
+    - _Strength: 0
     - _TriplanarMappingBlendSharpness: 4
     - _UVSec: 0
     - _UseUIAlphaClip: 0

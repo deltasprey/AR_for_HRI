@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class GameMenuManager : MonoBehaviour {
     public GameObject menu, instructionText;
     public Transform player;
-    public Toggle toggle;
+    public Toggle spatialToggle, navToggle;
     public float spawnDistance = 2;
     public bool follow = false;
 
@@ -37,21 +37,24 @@ public class GameMenuManager : MonoBehaviour {
         }
 #endif
         if (menu.activeSelf) {
-            menu.transform.LookAt(new Vector3(player.position.x, player.position.y, player.position.z));
+            menu.transform.LookAt(player.position);
             menu.transform.forward *= -1;
             if (follow)
-                menu.transform.position = player.position + new Vector3(player.forward.x, player.forward.y, player.forward.z).normalized * spawnDistance;
+                menu.transform.position = player.position + player.forward.normalized * spawnDistance;
         }
     }
 
     private void toggleMenu() {
         menu.SetActive(!menu.activeSelf);
-        menu.transform.position = player.position + new Vector3(player.forward.x, player.forward.y, player.forward.z).normalized * spawnDistance;
+        menu.transform.position = player.position + player.forward.normalized * spawnDistance;
     }
 
     public void toggleSpatialAwareness() {
-        if (toggle.isOn) CoreServices.SpatialAwarenessSystem.Enable();
-        else CoreServices.SpatialAwarenessSystem.Disable();
+        if (spatialToggle.isOn) CoreServices.SpatialAwarenessSystem.Enable();
+        else {
+            CoreServices.SpatialAwarenessSystem.Disable();
+            if (navigating) toggleNavigation();
+        }
     }
 
     public void toggleMenuFollow() { follow = !follow; }
@@ -60,12 +63,14 @@ public class GameMenuManager : MonoBehaviour {
         if (navigating) {
             CoreServices.SpatialAwarenessSystem.Disable();
             instructionText.SetActive(false);
-            toggle.isOn = false;
+            spatialToggle.isOn = false;
+            navToggle.isOn = false;
             navigating = false;
         } else {
             CoreServices.SpatialAwarenessSystem.Enable();
             instructionText.SetActive(true);
-            toggle.isOn = true;
+            spatialToggle.isOn = true;
+            navToggle.isOn = true;
             navigating = true;
         }
     }

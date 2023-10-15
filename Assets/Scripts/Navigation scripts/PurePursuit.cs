@@ -9,7 +9,8 @@ public class PurePursuit : MonoBehaviour {
     private LocMarkerManager markerManager;
     private TapToPlaceControllerEye navMarkers;
     private Vector2 rosPos, rosTargetPos2D = Vector2.zero;
-    private float rosTheta, targetTheta;
+    private float rosTheta, targetTheta, turnRate;
+    private bool follow = false;
 
     private void Start() {
         markerManager = FindObjectOfType<LocMarkerManager>();
@@ -21,6 +22,7 @@ public class PurePursuit : MonoBehaviour {
         SelfInteract.pathToMe += path;
         CmdVelControl.msgValueChanged += rosUpdate;
         SpeechManager.stop += stopCmds;
+        SpeechManager.AddListener("Follow Me", followMe);
     }
 
     private void OnDisable() {
@@ -28,6 +30,19 @@ public class PurePursuit : MonoBehaviour {
         SelfInteract.pathToMe -= path;
         CmdVelControl.msgValueChanged -= rosUpdate;
         SpeechManager.stop -= stopCmds;
+        SpeechManager.RemoveListener("Follow Me", followMe);
+    }
+
+    private void Update() {
+        if (follow) {
+            rosTargetPos2D = new(Camera.main.transform.position.z, Camera.main.transform.position.x);
+            targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg;
+            turnRate = (targetTheta - rosTheta) > 0 ? 0.6f : -0.6f;
+            if (!navigating) {
+                StartCoroutine(drive(turnRate, 0, 1));
+                navigating = true;
+            }
+        }
     }
 
     private void rosUpdate(float x, float z, float theta) {
@@ -42,7 +57,12 @@ public class PurePursuit : MonoBehaviour {
         StopAllCoroutines();
         turn = 0;
         forward = 0;
-        navigating = false;
+        follow = false;
+        navigating = false;   
+    }
+
+    private void followMe() {
+        follow = true;
     }
 
     private void navigate(SelfInteract marker) { initialisePursuit(marker, false); }
@@ -58,7 +78,7 @@ public class PurePursuit : MonoBehaviour {
         targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg;
         //print($"Target theta = {targetTheta}");
 
-        float turnRate = (targetTheta - rosTheta) > 0 ? 0.6f : -0.6f;
+        turnRate = (targetTheta - rosTheta) > 0 ? 0.6f : -0.6f;
         navigating = true;
 
         // Start driving
@@ -86,7 +106,9 @@ public class PurePursuit : MonoBehaviour {
 
             // Switch to next waypoint
             if (i < stopId - 1) {
-
+                rosTargetPos2D = new(navMarkers.markers[i].transform.position.z, navMarkers.markers[i].transform.position.x);
+                targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg;
+                turnRate = (targetTheta - rosTheta) > 0 ? 0.6f : -0.6f;
             }
         }
 

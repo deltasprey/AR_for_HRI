@@ -4,6 +4,9 @@ using UnityEngine;
 namespace QRTracking {
     public class QRCodesVisualizer : MonoBehaviour {
         public GameObject qrCodePrefab;
+        public delegate void QREvent(Transform marker);
+        public static event QREvent markerSpawned;
+        public static event QREvent markerDespawned;
 
         private SortedDictionary<System.Guid, GameObject> qrCodesObjectsList;
         private bool clearExisting = false;
@@ -42,6 +45,7 @@ namespace QRTracking {
         private void OnDisable() {
             foreach (var obj in qrCodesObjectsList) {
                 Destroy(obj.Value);
+                markerDespawned?.Invoke(obj.Value.transform);
             }
             qrCodesObjectsList.Clear();
             pendingActions.Clear();
@@ -81,15 +85,18 @@ namespace QRTracking {
                         qrCodeObject.GetComponent<SpatialGraphCoordinateSystem>().Id = action.qrCode.SpatialGraphNodeId;
                         qrCodeObject.GetComponent<QRCode>().qrCode = action.qrCode;
                         qrCodesObjectsList.Add(action.qrCode.Id, qrCodeObject);
+                        markerSpawned?.Invoke(qrCodeObject.transform.Find("Local Marker").transform);
                     } else if (action.type == ActionData.Type.Updated) {
                         if (!qrCodesObjectsList.ContainsKey(action.qrCode.Id)) {
                             GameObject qrCodeObject = Instantiate(qrCodePrefab, new Vector3(0, 0, 0), Quaternion.identity);
                             qrCodeObject.GetComponent<SpatialGraphCoordinateSystem>().Id = action.qrCode.SpatialGraphNodeId;
                             qrCodeObject.GetComponent<QRCode>().qrCode = action.qrCode;
                             qrCodesObjectsList.Add(action.qrCode.Id, qrCodeObject);
+                            markerSpawned?.Invoke(qrCodeObject.transform.Find("Local Marker").transform);
                         }
                     } else if (action.type == ActionData.Type.Removed) {
                         if (qrCodesObjectsList.ContainsKey(action.qrCode.Id)) {
+                            markerDespawned?.Invoke(qrCodesObjectsList[action.qrCode.Id].transform);
                             Destroy(qrCodesObjectsList[action.qrCode.Id]);
                             qrCodesObjectsList.Remove(action.qrCode.Id);
                             print("QR destroyed");
@@ -101,6 +108,7 @@ namespace QRTracking {
                 clearExisting = false;
                 foreach (var obj in qrCodesObjectsList) {
                     Destroy(obj.Value);
+                    markerDespawned?.Invoke(obj.Value.transform);
                 }
                 qrCodesObjectsList.Clear();
             }
@@ -110,5 +118,9 @@ namespace QRTracking {
         void Update() {
             HandleEvents();
         }
+
+        public void markerManuallySpawned(Transform marker) { markerSpawned?.Invoke(marker); }
+
+        public void markerManuallyDespawned(Transform marker) { markerDespawned?.Invoke(marker); }
     }
 }

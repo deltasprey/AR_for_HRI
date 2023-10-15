@@ -29,15 +29,19 @@ public class ManageQRPrefabInstances : MonoBehaviour {
     private void Update() {
         if (Input.GetKeyDown(KeyCode.K)) {
             QRCode[] qrCodes = FindObjectsOfType<QRCode>();
-            foreach (QRCode qrPrefab in qrCodes) Destroy(qrPrefab.gameObject);
+            foreach (QRCode qrPrefab in qrCodes) {
+                visualizer.markerManuallyDespawned(qrPrefab.transform);
+                Destroy(qrPrefab.gameObject);
+            }
             clearMarkers();
         } else if (Input.GetKeyDown(KeyCode.Backslash)) spawnMarker();
     }
 
     private void spawnMarker() {
         GameObject qrCodePrefab = visualizer.qrCodePrefab;
-        //Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.Euler(200, 45, 0));
-        Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.identity);
+        //GameObject marker = Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.Euler(200, 45, 0));
+        GameObject marker = Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.identity);
+        visualizer.markerManuallySpawned(marker.transform.Find("Local Marker").transform);
     }
 #endif
 
