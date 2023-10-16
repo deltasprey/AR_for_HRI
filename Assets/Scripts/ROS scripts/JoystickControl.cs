@@ -1,3 +1,4 @@
+using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Utilities;
 using System.Collections;
@@ -13,7 +14,8 @@ public class JoystickControl : MonoBehaviour {
     [SerializeField] private float deadZone = 0.05f;
     [SerializeField] private TMP_Text forward, right;
     [SerializeField] private GameObject stop, go;
-    [SerializeField] private bool attachToHand = false;
+    public bool attachToHand = false;
+
     private bool tracking = false;
     private Vector3 topPos, topRot;
     private MixedRealityPose pose;
@@ -35,16 +37,10 @@ public class JoystickControl : MonoBehaviour {
             x = Mathf.Repeat(Base.localEulerAngles.x + 180, 360) - 180;
             y = Mathf.Repeat(Base.localEulerAngles.y + 180, 360) - 180;
 
-            if (Mathf.Abs(x) > deadZone) {
-                x /= 50;
-            } else {
-                x = 0;
-            }
-            if (Mathf.Abs(y) > deadZone) {
-                y /= 50;
-            } else {
-                y = 0;
-            }
+            if (Mathf.Abs(x) > deadZone) x /= 50;
+            else x = 0;
+            if (Mathf.Abs(y) > deadZone) y /= 50;
+            else y = 0;
             rotation = new(x, y);
         } else {
             // Rotate the joystick back to its central position
@@ -63,11 +59,7 @@ public class JoystickControl : MonoBehaviour {
                     tracking = true;
                     StartCoroutine(trackHand());
                 }
-            } else {
-                if (tracking) {
-                    tracking = false;
-                }
-            }
+            } else if (tracking) tracking = false;
         }
 
         if (stopped) {
@@ -83,13 +75,11 @@ public class JoystickControl : MonoBehaviour {
         }
     }
 
-    public void grabbed() {
-        isGrabbed = true;
-    }
+    public void grabbed() { isGrabbed = true; }
 
-    public void released() {
-        isGrabbed = false;
-    }
+    public void released() { isGrabbed = false; }
+
+    public void setAttach(Interactable toggle) { attachToHand = toggle.IsToggled; }
 
     IEnumerator trackHand() {
         while (tracking) {
@@ -103,7 +93,7 @@ public class JoystickControl : MonoBehaviour {
         while (isGrabbed) yield return new WaitForSeconds(0.2f);
         yield return new WaitForSeconds(2);
         if (tracking) yield return null;
-        transform.localPosition = new Vector3(2, 0, 3);
+        transform.localPosition = new Vector3(0.2f, -0.5f, 0.3f);
         yield return null;
     }
 }

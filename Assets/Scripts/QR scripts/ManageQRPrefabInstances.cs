@@ -3,9 +3,10 @@ using QRTracking;
 using System.Collections;
 
 public class ManageQRPrefabInstances : MonoBehaviour {
+    [SerializeField] private bool spawnOnLoad = false;
+
     private QRCodesManager manager;
     private QRCodesVisualizer visualizer;
-    [SerializeField] private bool spawnOnLoad = false;
     
     private void OnEnable() {
         manager = GetComponent<QRCodesManager>();
@@ -45,13 +46,9 @@ public class ManageQRPrefabInstances : MonoBehaviour {
     }
 #endif
 
-    private void OnApplicationQuit() {
-        clearMarkers();
-    }
+    private void OnApplicationQuit() { clearMarkers(); }
 
-    public void InvokeClearMarkers() {
-        clearMarkers();
-    }
+    public void InvokeClearMarkers() { clearMarkers(); }
 
     private void clearMarkers() {
         print("Clearing QR Markers");

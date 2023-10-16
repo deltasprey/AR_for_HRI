@@ -4,15 +4,14 @@ using QRTracking;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler {
     public List<GameObject> markers { get; private set; } = new();
 
-    [SerializeField]
-    private float _maxDistance = 3;
-
-    [SerializeField]
-    private GameObject _instructionText, _objectToPlace, _container, _indicator;
+    [SerializeField] private float _maxDistance = 3;
+    [SerializeField] private GameObject _instructionText, _objectToPlace, _container, _indicator;
+    [SerializeField] private UnityEvent ValidSurface, NoValidSurface;
 
     private IMixedRealityEyeGazeProvider EyeGazeProvider;
     private LineRenderer lineRenderer;
@@ -21,10 +20,11 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
     private Transform locMarker;
     private string _lookAtSurfaceText;
     private bool place = true, placing = false;
-    private int focused = 0, count = 1;
+    private int focused = 0, count = 1, ignoreLayerId;
     private Vector3? foundPosition;
 
     private void Start() {
+        ignoreLayerId = LayerMask.NameToLayer("UI");
         EyeGazeProvider = CoreServices.InputSystem.EyeGazeProvider;
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityFocusHandler>(this);
 
@@ -41,23 +41,18 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
     }
 
     private void Update() {
-        if (_instructionText.activeSelf) 
-            _instructionTextMesh.text = focused > 0 ? "Tap to select a location" : _lookAtSurfaceText;
-        if (placing) {
+        if (placing && focused > 0) {
             foundPosition = EyeGazeProvider.HitInfo.point;
-            if (foundPosition != null)
-                _indicator.transform.position = foundPosition.Value + Vector3.up * 0.05f;
+            if (foundPosition != null) _indicator.transform.position = foundPosition.Value + Vector3.up * 0.05f;
         }
-        if (locMarker != null)
-            lineRenderer.SetPosition(0, locMarker.position);
+        if (locMarker != null) lineRenderer.SetPosition(0, locMarker.position);
     }
 
     private void markerSpawned(Transform marker) { locMarker = marker; }
 
     private void markerDespawned(Transform _) {
         locMarker = null;
-        if (lineRenderer.positionCount > 1)
-            lineRenderer.SetPosition(0, lineRenderer.GetPosition(1));
+        if (lineRenderer.positionCount > 1) lineRenderer.SetPosition(0, lineRenderer.GetPosition(1));
     }
 
     public void PlaceRemoveMarker() {
@@ -71,8 +66,7 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
                     markers.Add(marker);
                     lineRenderer.positionCount = count;
                     lineRenderer.SetPosition(count - 1, foundPosition.Value + Vector3.up * 0.11f);
-                    if (count == 2 && locMarker == null)
-                        lineRenderer.SetPosition(0, foundPosition.Value + Vector3.up * 0.11f);
+                    if (count == 2 && locMarker == null) lineRenderer.SetPosition(0, foundPosition.Value + Vector3.up * 0.11f);
                 }
             } else if (lookTarget != null) {
                 int idx = int.Parse(lookTarget.GetComponentInChildren<TMP_Text>().text) - 1;
@@ -86,17 +80,39 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
                 place = true;
                 count--;
                 lineRenderer.positionCount = count;
+                if (count > 1 && locMarker == null) lineRenderer.SetPosition(0, lineRenderer.GetPosition(1));
+                focused -= 2;
             }
         }
     }
 
-    void IMixedRealityFocusHandler.OnFocusEnter(FocusEventData eventData) { focused++; }
+    void IMixedRealityFocusHandler.OnFocusEnter(FocusEventData eventData) {
+        focused++;
+        if (eventData.NewFocusedObject != null) {
+            if (eventData.NewFocusedObject.layer != ignoreLayerId) {
+                ValidSurface.Invoke();
+                _instructionTextMesh.text = "Tap to select a location";
+            } else {
+                _indicator.SetActive(false);
+                NoValidSurface.Invoke();
+                _instructionTextMesh.text = _lookAtSurfaceText;
+            }
+        }
+    }
 
-    void IMixedRealityFocusHandler.OnFocusExit(FocusEventData eventData) { focused--; }
+    void IMixedRealityFocusHandler.OnFocusExit(FocusEventData eventData) {
+        if (--focused == 0) {
+            _indicator.SetActive(false);
+            NoValidSurface.Invoke();
+            _instructionTextMesh.text = _lookAtSurfaceText;
+        }
+    }
 
     public void removeMarker(SelfInteract marker) {
         place = false;
+        placing = false;
         lookTarget = marker.gameObject;
+        _indicator.SetActive(false);
     }
 
     public void ignoreMarker(SelfInteract _) {
@@ -104,8 +120,16 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
         lookTarget = null;
     }
 
+    public void removeAllMarkers() {
+        lineRenderer.positionCount = 1;
+        for (int i = 0; i < markers.Count; i++) {
+            Destroy(markers[i]);
+            markers.RemoveAt(i);
+        }
+    }
+
     public void indicateMarkerLoc() {
-        if (place) {
+        if (place && focused > 0) {
             placing = true;
             _indicator.SetActive(true);
         }

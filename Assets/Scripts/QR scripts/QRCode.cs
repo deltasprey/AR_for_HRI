@@ -27,9 +27,7 @@ namespace QRTracking {
         void Start() {
             PhysicalSize = 0.1f;
             CodeText = "(.13,,.06,,180,)";
-            if (qrCode == null) {
-                throw new System.Exception("QR Code Empty");
-            }
+            if (qrCode == null) throw new System.Exception("QR Code Empty");
 
             PhysicalSize = qrCode.PhysicalSideLength;
             CodeText = qrCode.Data;

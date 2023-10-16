@@ -23,7 +23,7 @@ using UnityEngine.UI;
 
 namespace RosSharp.RosBridgeClient {
     public class RosConnector : MonoBehaviour {
-        public int timeout = 10;
+        [SerializeField] private int timeout = 10;
 
         public RosSocket RosSocket { get; private set; }
         public enum Protocols { WebSocketSharp, WebSocketNET, WebSocketUWP };
@@ -68,9 +68,7 @@ namespace RosSharp.RosBridgeClient {
                 Debug.LogWarning(msgText.text);
                 RosSocket.Close();
             } else {
-                foreach (MonoBehaviour script in dependentScripts) {
-                    script.enabled = true;
-                }
+                foreach (MonoBehaviour script in dependentScripts) script.enabled = true;
                 btnText.text = "Connected";
                 connBtn.interactable = false;
                 serverIP.interactable = false;
@@ -96,9 +94,7 @@ namespace RosSharp.RosBridgeClient {
 #endif
         }
 
-        private void OnApplicationQuit() {
-            RosSocket.Close();
-        }
+        private void OnApplicationQuit() { RosSocket.Close(); }
 
         private void OnConnected(object sender, EventArgs e) {
             IsConnected.Set();

@@ -1,13 +1,14 @@
-using Microsoft.MixedReality.Toolkit;
 using UnityEngine;
-using UnityEngine.UI;
+using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.UI;
+using Microsoft.MixedReality.Toolkit.Utilities.Solvers;
 
 public class GameMenuManager : MonoBehaviour {
-    public GameObject menu, instructionText;
-    public Transform player;
-    public Toggle spatialToggle, navToggle;
-    public float spawnDistance = 2;
-    public bool follow = false;
+    [SerializeField] private GameObject menu, instructionText;
+    [SerializeField] private Transform player;
+    [SerializeField] private Interactable attachToggle, spatialToggle, navToggle;
+    [SerializeField] private RadialView follow;
+    [SerializeField] private float spawnDistance = 2;
 
     private bool navigating = false;
 
@@ -21,8 +22,13 @@ public class GameMenuManager : MonoBehaviour {
         SpeechManager.RemoveListener("toggle navigation", toggleNavigation);
     }
 
-    private void Start() { 
-        CoreServices.SpatialAwarenessSystem.Disable();
+    private void Start() {
+        attachToggle.IsToggled = FindObjectOfType<JoystickControl>().attachToHand;
+        if (instructionText.activeSelf) {
+            spatialToggle.IsToggled = true;
+            navToggle.IsToggled = true;
+            navigating = true;
+        } else CoreServices.SpatialAwarenessSystem.Disable();
 
         if (!PlayerPrefs.HasKey("Updated")) {
             print("###=== Game Updated ===###");
@@ -30,47 +36,39 @@ public class GameMenuManager : MonoBehaviour {
         }
     }
 
-    private void Update() {
 #if UNITY_EDITOR
-        if (Input.GetKeyDown(KeyCode.M)) {
-            toggleMenu();
-        }
-#endif
-        if (menu.activeSelf) {
-            menu.transform.LookAt(player.position);
-            menu.transform.forward *= -1;
-            if (follow)
-                menu.transform.position = player.position + player.forward.normalized * spawnDistance;
-        }
+    private void Update() {
+        if (Input.GetKeyDown(KeyCode.M)) toggleMenu();
     }
+#endif
 
     private void toggleMenu() {
         menu.SetActive(!menu.activeSelf);
-        menu.transform.position = player.position + player.forward.normalized * spawnDistance;
+        transform.position = player.position + player.forward.normalized * spawnDistance;
     }
 
     public void toggleSpatialAwareness() {
-        if (spatialToggle.isOn) CoreServices.SpatialAwarenessSystem.Enable();
+        if (spatialToggle.IsToggled) CoreServices.SpatialAwarenessSystem.Enable();
         else {
             CoreServices.SpatialAwarenessSystem.Disable();
             if (navigating) toggleNavigation();
         }
     }
 
-    public void toggleMenuFollow() { follow = !follow; }
+    public void toggleMenuFollow() { follow.enabled = !follow.enabled; }
 
     public void toggleNavigation() {
         if (navigating) {
             CoreServices.SpatialAwarenessSystem.Disable();
             instructionText.SetActive(false);
-            spatialToggle.isOn = false;
-            navToggle.isOn = false;
+            spatialToggle.IsToggled = false;
+            navToggle.IsToggled = false;
             navigating = false;
         } else {
             CoreServices.SpatialAwarenessSystem.Enable();
             instructionText.SetActive(true);
-            spatialToggle.isOn = true;
-            navToggle.isOn = true;
+            spatialToggle.IsToggled = true;
+            navToggle.IsToggled = true;
             navigating = true;
         }
     }

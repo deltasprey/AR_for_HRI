@@ -61,9 +61,7 @@ public class PurePursuit : MonoBehaviour {
         navigating = false;   
     }
 
-    private void followMe() {
-        follow = true;
-    }
+    private void followMe() { follow = true; }
 
     private void navigate(SelfInteract marker) { initialisePursuit(marker, false); }
     

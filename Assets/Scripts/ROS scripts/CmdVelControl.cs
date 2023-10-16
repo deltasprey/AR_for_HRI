@@ -4,26 +4,22 @@ using RosSharp.RosBridgeClient.Messages.Geometry;
 using System.Collections;
 
 public class CmdVelControl : MonoBehaviour {
-    public JoystickControl joystick;
-    public PurePursuit purePursuit;
-    public Transform bot;
-    public float linearSpeed = 1f, turnSpeed = 1f;
-    public bool stopOnLoad = true;
+    [SerializeField] private JoystickControl joystick;
+    [SerializeField] private PurePursuit purePursuit;
+    [SerializeField] private float linearSpeed = 1f, turnSpeed = 1f;
+    [SerializeField] private bool stopOnLoad = true;
 
     public delegate void MsgReceived(float x, float z, float theta);
     public static event MsgReceived msgValueChanged;
 
     private string botCommandTopic = "/turtle1/cmd_vel";
-    private float x = 0, z = 0, theta = 0, offsetTheta;
+    private float x = 0, z = 0, theta = 0;
     private float oldX, oldZ, oldTheta;
-    private float forwardSpeed = 0, strafeSpeed = 0, angularSpeed = 0;
+    private float forwardSpeed = 0, angularSpeed = 0;
     private bool isGrabbed = false, initialised = false, offsetted = false, stop = true;
     private Twist twistMessage;
     private RosSocket rosSocket;
     private ExtOdometrySubscriber odomRef;
-    private UnityEngine.Vector3 position;
-    private UnityEngine.Quaternion rotation;
-    private Matrix4x4 transformationMatrix;
 
     private void Start() {
         Invoke(nameof(setStopVar), 0.2f);
@@ -66,7 +62,7 @@ public class CmdVelControl : MonoBehaviour {
 
             // Set linear and angular velocities in Twist message
             twistMessage.linear.x = forwardSpeed;
-            twistMessage.linear.y = -strafeSpeed;
+            twistMessage.linear.y = 0;
             twistMessage.angular.z = -angularSpeed;
 
             // Publish the Twist message to control the robot
@@ -75,28 +71,14 @@ public class CmdVelControl : MonoBehaviour {
             // Update the pose of the robot in Unity
             if (initialised && offsetted) {
                 if (x != oldX || z != oldZ || theta != oldTheta) {
-                    // Update GameObject transform
-                    rotation = UnityEngine.Quaternion.Euler(90, theta + offsetTheta, 0);
-                    position = transformationMatrix.MultiplyPoint(new UnityEngine.Vector3(x, 0, z));
-                    if (bot != null) bot.SetPositionAndRotation(position, rotation);
-
                     // Invoke pose updated event if the robot has moved (poseCallback has been called)
                     msgValueChanged?.Invoke(x, z, theta);
-
                     oldX = x;
                     oldZ = z;
                     oldTheta = theta;
                     //Debug.Log($"{position.x}, {position.y}, {position.z}");
                 }
             } else if (initialised) {
-                // Coordinate frame transform (not working)
-                UnityEngine.Quaternion botRot = UnityEngine.Quaternion.Euler(0, bot.rotation.eulerAngles.y, 0);
-                UnityEngine.Quaternion rotationAB = UnityEngine.Quaternion.Inverse(odomRef.rotation) * botRot;
-                Matrix4x4 rotationMatrix = Matrix4x4.TRS(UnityEngine.Vector3.zero, rotationAB, UnityEngine.Vector3.one);
-                transformationMatrix = Matrix4x4.Translate(bot.position - odomRef.position) * rotationMatrix;
-
-                // Offsets and n-1 values
-                offsetTheta = bot.rotation.eulerAngles.y - theta;
                 oldX = x;
                 oldZ = z;
                 oldTheta = theta;
@@ -153,11 +135,7 @@ public class CmdVelControl : MonoBehaviour {
 
     // Return private pose variables
     public (float x, float z, float theta) initPos() { 
-        if (initialised) { // && offsetted) {
-            //return (position.x, position.z, theta + thetaOffset);
-            return (x, z, theta);
-        }
+        if (initialised) return (x, z, theta);
         return (0, 0, 404);
-        //return (1, 1, 0); // testing
     }
 }

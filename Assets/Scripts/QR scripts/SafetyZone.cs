@@ -3,8 +3,8 @@ using Microsoft.MixedReality.Toolkit.Utilities;
 using UnityEngine;
 
 public class SafetyZone : MonoBehaviour {
-    public GameObject handCollider, headCollider;
-    public Material zoneMat;
+    [SerializeField] private GameObject handCollider, headCollider;
+    [SerializeField] private Material zoneMat;
 
     private GameObject rHandObj, lHandObj, headObj;
     private MixedRealityPose pose;
@@ -34,8 +34,7 @@ public class SafetyZone : MonoBehaviour {
     private void OnTriggerEnter(Collider other) {
         // If instantiated prefabs collide with the saftey zone, invoke the stop event
         if (other.CompareTag("Player")) {          
-            stopped++;
-            if (stopped == 1) {
+            if (++stopped == 1) {
                 SpeechManager.InvokeEvent("stop");
                 zoneMat.SetColor("_Line_Color_", Color.red);
             }
@@ -45,8 +44,7 @@ public class SafetyZone : MonoBehaviour {
     private void OnTriggerExit(Collider other) {
         // If ALL instantiated prefabs no longer collide with the saftey zone, invoke the restart event
         if (stopped > 0 && other.CompareTag("Player")) {
-            stopped--;
-            if (stopped == 0) {
+            if (--stopped == 0) {
                 SpeechManager.InvokeEvent("restart", true);
                 zoneMat.SetColor("_Line_Color_", Color.green);
             }

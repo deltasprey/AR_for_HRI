@@ -42,12 +42,8 @@ namespace QRTracking {
             }
         }
 
-        private void OnApplicationQuit() {
-            m_ShuttingDown = true;
-        }
+        private void OnApplicationQuit() { m_ShuttingDown = true; }
 
-        private void OnDestroy() {
-            m_ShuttingDown = true;
-        }
+        private void OnDestroy() { m_ShuttingDown = true; }
     }
 }

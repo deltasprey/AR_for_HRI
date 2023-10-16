@@ -11,16 +11,18 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
     [SerializeField] private KeyCode selectKey = KeyCode.Mouse0;
     [SerializeField] private UnityEvent onClick, onRelease, longClick;
 
-    private bool shouldUpdate = false, loopCompleted = false, keyPressed = false;
+    private bool shouldUpdate = false, loopCompleted = false, keyPressed = false, clicked = false, active = false;
 
     private void Start() { CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(this); }
 
     private void Update() {
         if (!loopCompleted) {
-            if (keyPressed || Input.GetKey(selectKey)) {
+            if (active && (keyPressed || Input.GetKey(selectKey))) {
                 // Update radial indicator progress in forward direction
-                if (!indicator.enabled)
+                if (!clicked) {
+                    clicked = true;
                     onClick.Invoke();
+                }
                 shouldUpdate = false;
                 indicatorTimer += Time.deltaTime;
                 indicator.enabled = true;
@@ -54,7 +56,16 @@ public class RadialIndicator : MonoBehaviour, IMixedRealityPointerHandler {
         if (Input.GetKeyUp(selectKey)) {
             shouldUpdate = true;
             loopCompleted = false;
+            clicked = false;
             onRelease.Invoke();
+        }
+    }
+
+    public void setActive(bool val) { 
+        active = val;
+        if (!active) {
+            shouldUpdate = true;
+            clicked = false;
         }
     }
 

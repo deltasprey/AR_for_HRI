@@ -6,24 +6,24 @@ using Unity.VisualScripting;
 using QRTracking;
 
 public class LocMarkerManager : MonoBehaviour {
-    public QRCode qr;
-    public GameObject simpleGUI, complexGUI;
-    public Material sphere;
-    public Transform localiser, worldMarker, safetyZone;
-    public Slider simpleScaleSlider, complexScaleSlider, simpleSafetySlider, complexSafetySlider;
-    public TextMeshProUGUI simpleScaleSliderText, complexScaleSliderText, simpleSafetySliderText, complexSafetySliderText;
-    public TMP_Dropdown moveStep, rotateStep;
-    public TMP_InputField moveX, moveY, moveZ, rotX, rotY, rotZ;
-    public Button simpleSaveButton, complexSaveButton;
     public Matrix4x4 rotationMatrix { get; private set; }
     public Vector3 offset { get; private set; }
     public float offsetTheta { get; private set; }
 
+    [SerializeField] private QRCode qr;
+    [SerializeField] private GameObject simpleGUI, complexGUI;
+    [SerializeField] private Material sphere;
+    [SerializeField] private Transform localiser, worldMarker, safetyZone; 
+    [SerializeField] private Slider simpleScaleSlider, complexScaleSlider, simpleSafetySlider, complexSafetySlider;
+    [SerializeField] private TextMeshProUGUI simpleScaleSliderText, complexScaleSliderText, simpleSafetySliderText, complexSafetySliderText;
+    [SerializeField] private TMP_Dropdown moveStep, rotateStep;
+    [SerializeField] private TMP_InputField moveX, moveY, moveZ, rotX, rotY, rotZ;
+    [SerializeField] private Button simpleSaveButton, complexSaveButton;
+     
     private Transform player, root;
     private CmdVelControl rosPose;
     private Vector3 position;
     private Quaternion rotation;
-
     private readonly float[] moveAmounts = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.5f };
     private readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
     private float moveAmount, localiserScale, safetyScale;
@@ -113,16 +113,14 @@ public class LocMarkerManager : MonoBehaviour {
             if (qr.CodeText.CountIndices(',') == 2) {
                 print("Offset");
                 string[] codeVals = qr.CodeText[1..^1].Split(',');
-                for (int i = 0; i < codeVals.Length; i++) {
+                for (int i = 0; i < codeVals.Length; i++)
                     if (codeVals[i] == "") codeVals[i] = "0";
-                }
                 QROffset(float.Parse(codeVals[0]), float.Parse(codeVals[1]), float.Parse(codeVals[2]));
             } else if (qr.CodeText.CountIndices(',') == 5) {
                 print("Offset and Rotation");
                 string[] codeVals = qr.CodeText[1..^1].Split(',');
-                for (int i = 0; i < codeVals.Length; i++) {
+                for (int i = 0; i < codeVals.Length; i++)
                     if (codeVals[i] == "") codeVals[i] = "0";
-                }
                 QROffsetRotation(float.Parse(codeVals[0]), float.Parse(codeVals[1]), float.Parse(codeVals[2]),
                                  float.Parse(codeVals[3]), float.Parse(codeVals[4]), float.Parse(codeVals[5]));
             }
@@ -182,7 +180,7 @@ public class LocMarkerManager : MonoBehaviour {
     }
 
     private void qrPositionMoved(object _, QRCodeEventArgs<Microsoft.MixedReality.QR.QRCode> e) {
-        if (started) { qrMoved = true; }
+        if (started) qrMoved = true;
     }
 #endregion
 

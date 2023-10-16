@@ -9,6 +9,7 @@ namespace QRTracking {
         public static event QREvent markerDespawned;
 
         private SortedDictionary<System.Guid, GameObject> qrCodesObjectsList;
+        private GameObject qrCodeObject;
         private bool clearExisting = false;
 
         struct ActionData {
@@ -51,44 +52,37 @@ namespace QRTracking {
             pendingActions.Clear();
         }
 
-        private void Instance_QRCodesTrackingStateChanged(object sender, bool status) {
-            if (!status) clearExisting = true;
-        }
+        private void Instance_QRCodesTrackingStateChanged(object sender, bool status) { if (!status) clearExisting = true; }
 
         private void Instance_QRCodeAdded(object sender, QRCodeEventArgs<Microsoft.MixedReality.QR.QRCode> e) {
             Debug.Log("QRCodesVisualizer Instance_QRCodeAdded");
-            lock (pendingActions) {
-                pendingActions.Enqueue(new ActionData(ActionData.Type.Added, e.Data));
-            }
+            lock (pendingActions) { pendingActions.Enqueue(new ActionData(ActionData.Type.Added, e.Data)); }
         }
 
         private void Instance_QRCodeUpdated(object sender, QRCodeEventArgs<Microsoft.MixedReality.QR.QRCode> e) {
             Debug.Log("QRCodesVisualizer Instance_QRCodeUpdated");
-            lock (pendingActions) {
-                pendingActions.Enqueue(new ActionData(ActionData.Type.Updated, e.Data));
-            }
+            lock (pendingActions) { pendingActions.Enqueue(new ActionData(ActionData.Type.Updated, e.Data)); }
         }
 
         private void Instance_QRCodeRemoved(object sender, QRCodeEventArgs<Microsoft.MixedReality.QR.QRCode> e) {
             Debug.Log("QRCodesVisualizer Instance_QRCodeRemoved");
-            lock (pendingActions) {
-                pendingActions.Enqueue(new ActionData(ActionData.Type.Removed, e.Data));
-            }
+            lock (pendingActions) { pendingActions.Enqueue(new ActionData(ActionData.Type.Removed, e.Data)); }
         }
 
-        private void HandleEvents() {
+        // Update is called once per frame
+        void Update() {
             lock (pendingActions) {
                 while (pendingActions.Count > 0) {
                     var action = pendingActions.Dequeue();
                     if (action.type == ActionData.Type.Added) {
-                        GameObject qrCodeObject = Instantiate(qrCodePrefab, new Vector3(0, 0, 0), Quaternion.identity);
+                        qrCodeObject = Instantiate(qrCodePrefab, new Vector3(0, 0, 0), Quaternion.identity);
                         qrCodeObject.GetComponent<SpatialGraphCoordinateSystem>().Id = action.qrCode.SpatialGraphNodeId;
                         qrCodeObject.GetComponent<QRCode>().qrCode = action.qrCode;
                         qrCodesObjectsList.Add(action.qrCode.Id, qrCodeObject);
                         markerSpawned?.Invoke(qrCodeObject.transform.Find("Local Marker").transform);
                     } else if (action.type == ActionData.Type.Updated) {
                         if (!qrCodesObjectsList.ContainsKey(action.qrCode.Id)) {
-                            GameObject qrCodeObject = Instantiate(qrCodePrefab, new Vector3(0, 0, 0), Quaternion.identity);
+                            qrCodeObject = Instantiate(qrCodePrefab, new Vector3(0, 0, 0), Quaternion.identity);
                             qrCodeObject.GetComponent<SpatialGraphCoordinateSystem>().Id = action.qrCode.SpatialGraphNodeId;
                             qrCodeObject.GetComponent<QRCode>().qrCode = action.qrCode;
                             qrCodesObjectsList.Add(action.qrCode.Id, qrCodeObject);
@@ -112,11 +106,6 @@ namespace QRTracking {
                 }
                 qrCodesObjectsList.Clear();
             }
-        }
-
-        // Update is called once per frame
-        void Update() {
-            HandleEvents();
         }
 
         public void markerManuallySpawned(Transform marker) { markerSpawned?.Invoke(marker); }

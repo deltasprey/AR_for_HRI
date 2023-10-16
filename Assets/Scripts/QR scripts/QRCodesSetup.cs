@@ -8,16 +8,12 @@ namespace QRTracking {
         [Tooltip("Visualize the detected QRCodes in the 3d space.")]
         public bool VisualizeQRCodes = true;
 
-        QRCodesManager qrCodesManager = null;
+        private QRCodesManager qrCodesManager = null;
 
         void Awake() {
             qrCodesManager = QRCodesManager.Instance;
-            if (AutoStartQRTracking) {
-                qrCodesManager.StartQRTracking();
-            }
-            if (VisualizeQRCodes) {
-                gameObject.AddComponent(typeof(QRCodesVisualizer));
-            }
+            if (AutoStartQRTracking) qrCodesManager.StartQRTracking();
+            if (VisualizeQRCodes) gameObject.AddComponent(typeof(QRCodesVisualizer));
         }
     }
 }
