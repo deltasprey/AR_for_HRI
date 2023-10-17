@@ -19,7 +19,7 @@ using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using Microsoft.MixedReality.Toolkit.UI;
 
 namespace RosSharp.RosBridgeClient {
     public class RosConnector : MonoBehaviour {
@@ -36,7 +36,8 @@ namespace RosSharp.RosBridgeClient {
         [SerializeField] private TMP_InputField serverIP;
         [SerializeField] private TMP_InputField serverPort;
         [SerializeField] private TMP_Text msgText, btnText;
-        [SerializeField] private Button connBtn;
+        [SerializeField] private Transform connBtn;
+        [SerializeField] private Material enabledMat, disabledMat;
 
         private ManualResetEvent IsConnected = new(false);
         private bool disconnected = false;
@@ -60,7 +61,9 @@ namespace RosSharp.RosBridgeClient {
 
             if (!IsConnected.WaitOne(timeout * 1000)) {
                 btnText.text = "Connect";
-                connBtn.interactable = true;
+                connBtn.GetComponent<Interactable>().IsEnabled = true;
+                connBtn.GetComponent<PressableButtonHoloLens2>().enabled = true;
+                connBtn.Find("BackPlate/Quad").GetComponent<MeshRenderer>().material = enabledMat;
                 serverIP.interactable = true;
                 serverPort.interactable = true;
                 msgText.text = "Failed to connect to RosBridge at: " + RosBridgeServerUrl;
@@ -70,10 +73,12 @@ namespace RosSharp.RosBridgeClient {
             } else {
                 foreach (MonoBehaviour script in dependentScripts) script.enabled = true;
                 btnText.text = "Connected";
-                connBtn.interactable = false;
+                connBtn.GetComponent<Interactable>().IsEnabled = false;
+                connBtn.GetComponent<PressableButtonHoloLens2>().enabled = false;
+                connBtn.Find("BackPlate/Quad").GetComponent<MeshRenderer>().material = disabledMat;
                 serverIP.interactable = false;
                 serverPort.interactable = false;
-                msgText.text = "Connected to RosBridge: " + RosBridgeServerUrl;
+                msgText.text = "Connected to RosBridge at: " + RosBridgeServerUrl;
                 msgText.color = Color.green;
             }
         }
@@ -111,10 +116,12 @@ namespace RosSharp.RosBridgeClient {
         private void Update() {
             if (disconnected) {
                 btnText.text = "Connect";
-                connBtn.interactable = true;
+                connBtn.GetComponent<Interactable>().IsEnabled = true;
+                connBtn.GetComponent<PressableButtonHoloLens2>().enabled = true;
+                connBtn.Find("BackPlate/Quad").GetComponent<MeshRenderer>().material = enabledMat;
                 serverIP.interactable = true;
                 serverPort.interactable = true;
-                msgText.text = "Disconnected from RosBridge: " + RosBridgeServerUrl;
+                msgText.text = "Disconnected from RosBridge at: " + RosBridgeServerUrl;
                 msgText.color = new Color(255, 128, 0);
                 disconnected = false;
             }

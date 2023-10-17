@@ -26,7 +26,6 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
     private void Start() {
         ignoreLayerId = LayerMask.NameToLayer("UI");
         EyeGazeProvider = CoreServices.InputSystem.EyeGazeProvider;
-        CoreServices.InputSystem?.RegisterHandler<IMixedRealityFocusHandler>(this);
 
         lineRenderer = GetComponent<LineRenderer>();
 
@@ -38,6 +37,12 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
         QRCodesVisualizer.markerDespawned += markerDespawned;
         SelfInteract.removeMe += removeMarker;
         SelfInteract.ignoreMe += ignoreMarker;
+    }
+
+    private void OnEnable() { CoreServices.InputSystem?.RegisterHandler<IMixedRealityFocusHandler>(this); }
+
+    private void OnDisable() {
+        try { CoreServices.InputSystem?.UnregisterHandler<IMixedRealityFocusHandler>(this); } catch { }
     }
 
     private void Update() {

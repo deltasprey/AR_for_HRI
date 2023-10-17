@@ -14,7 +14,7 @@ public class JoystickControl : MonoBehaviour {
     [SerializeField] private float deadZone = 0.05f;
     [SerializeField] private TMP_Text forward, right;
     [SerializeField] private GameObject stop, go;
-    public bool attachToHand = false;
+    public bool attachToHand = false, lhand = true;
 
     private bool tracking = false;
     private Vector3 topPos, topRot;
@@ -52,7 +52,7 @@ public class JoystickControl : MonoBehaviour {
         right.text = "Right\n" + rotation.y.ToString("F3");
 
         if (attachToHand) {
-            if (HandJointUtils.TryGetJointPose(TrackedHandJoint.Palm, Handedness.Left, out pose)) {
+            if (HandJointUtils.TryGetJointPose(TrackedHandJoint.Palm, lhand ? Handedness.Left : Handedness.Right, out pose)) {
                 if (!tracking) {
                     StopAllCoroutines();
                     transform.position = pose.Position;

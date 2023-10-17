@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using Unity.VisualScripting;
 using QRTracking;
+using Microsoft.MixedReality.Toolkit.UI;
 
 public class LocMarkerManager : MonoBehaviour {
     public Matrix4x4 rotationMatrix { get; private set; }
@@ -13,13 +14,13 @@ public class LocMarkerManager : MonoBehaviour {
     [SerializeField] private QRCode qr;
     [SerializeField] private GameObject simpleGUI, complexGUI;
     [SerializeField] private Material sphere;
-    [SerializeField] private Transform localiser, worldMarker, safetyZone; 
+    [SerializeField] private Transform localiser, worldMarker, safetyZone, simpleSaveButton, complexSaveButton; 
     [SerializeField] private Slider simpleScaleSlider, complexScaleSlider, simpleSafetySlider, complexSafetySlider;
     [SerializeField] private TextMeshProUGUI simpleScaleSliderText, complexScaleSliderText, simpleSafetySliderText, complexSafetySliderText;
     [SerializeField] private TMP_Dropdown moveStep, rotateStep;
     [SerializeField] private TMP_InputField moveX, moveY, moveZ, rotX, rotY, rotZ;
-    [SerializeField] private Button simpleSaveButton, complexSaveButton;
-     
+    [SerializeField] private Material enabledMat, disabledMat;
+
     private Transform player, root;
     private CmdVelControl rosPose;
     private Vector3 position;
@@ -131,17 +132,17 @@ public class LocMarkerManager : MonoBehaviour {
 
     private void QROffset(float x, float y, float z) {
         localiser.position = worldMarker.position + localiser.forward * x + localiser.up * y + localiser.right * z;
-        moveX.text = (x - worldMarker.position.x).ToString();
-        moveY.text = (y - worldMarker.position.y).ToString();
-        moveZ.text = (z - worldMarker.position.z).ToString();
+        moveX.text = localiser.localPosition.x.ToString();
+        moveY.text = localiser.localPosition.y.ToString();
+        moveZ.text = localiser.localPosition.z.ToString();
     }
 
     private void QROffsetRotation(float x, float y, float z, float rx, float ry, float rz) {
         localiser.eulerAngles = new Vector3(rx, worldMarker.eulerAngles.y + ry, rz);
         QROffset(x, y, z);
-        rotX.text = rx.ToString();
-        rotY.text = (ry - worldMarker.eulerAngles.y).ToString();
-        rotZ.text = rz.ToString();
+        rotX.text = localiser.localEulerAngles.x.ToString();
+        rotY.text = localiser.localEulerAngles.y.ToString();
+        rotZ.text = localiser.localEulerAngles.z.ToString();
     }
 
     // Robot position changed event callback
@@ -263,7 +264,7 @@ public class LocMarkerManager : MonoBehaviour {
     }
 
     public void increaseRotateAmount() {
-        if (rotateStep.value < moveAmounts.Length - 1) rotateAmount = rotateAmounts[++rotateStep.value];
+        if (rotateStep.value < rotateAmounts.Length - 1) rotateAmount = rotateAmounts[++rotateStep.value];
     }
 
     public void decreaseRotateAmount() {
@@ -279,13 +280,13 @@ public class LocMarkerManager : MonoBehaviour {
 
     public void moveXPlus() {
         localiser.Translate(Vector3.right * moveAmount);
-        moveX.text = (localiser.position.x - worldMarker.position.x).ToString();
+        moveX.text = localiser.localPosition.x.ToString();
         markerMoved();
     }
 
     public void moveXMinus() {
         localiser.Translate(Vector3.left * moveAmount);
-        moveX.text = (localiser.position.x - worldMarker.position.x).ToString();
+        moveX.text = localiser.localPosition.x.ToString();
         markerMoved();
     }
 
@@ -298,13 +299,13 @@ public class LocMarkerManager : MonoBehaviour {
 
     public void moveYPlus() {
         localiser.Translate(Vector3.up * moveAmount);
-        moveY.text = (localiser.position.y - worldMarker.position.y).ToString();
+        moveY.text = localiser.localPosition.y.ToString();
         markerMoved();
     }
 
     public void moveYMinus() {
         localiser.Translate(Vector3.down * moveAmount);
-        moveY.text = (localiser.position.y - worldMarker.position.y).ToString();
+        moveY.text = localiser.localPosition.y.ToString();
         markerMoved();
     }
 
@@ -317,13 +318,13 @@ public class LocMarkerManager : MonoBehaviour {
 
     public void moveZPlus() {
         localiser.Translate(Vector3.forward * moveAmount);
-        moveZ.text = (localiser.position.z - worldMarker.position.z).ToString();
+        moveZ.text = localiser.localPosition.z.ToString();
         markerMoved();
     }
 
     public void moveZMinus() {
         localiser.Translate(Vector3.back * moveAmount);
-        moveZ.text = (localiser.position.z - worldMarker.position.z).ToString();
+        moveZ.text = localiser.localPosition.z.ToString();
         markerMoved();
     }
 
@@ -336,13 +337,13 @@ public class LocMarkerManager : MonoBehaviour {
 
     public void rotateXPlus() {
         localiser.Rotate(Vector3.right * rotateAmount);
-        rotX.text = localiser.eulerAngles.x.ToString("F3");
+        rotX.text = localiser.localEulerAngles.x.ToString("F3");
         markerMoved();
     }
 
     public void rotateXMinus() {
         localiser.Rotate(Vector3.left * rotateAmount);
-        rotX.text = localiser.eulerAngles.x.ToString("F3");
+        rotX.text = localiser.localEulerAngles.x.ToString("F3");
         markerMoved();
     }
 
@@ -355,13 +356,13 @@ public class LocMarkerManager : MonoBehaviour {
 
     public void rotateYPlus() {
         localiser.Rotate(Vector3.up * rotateAmount);
-        rotY.text = (localiser.eulerAngles.y - worldMarker.eulerAngles.y).ToString("F3");
+        rotY.text = localiser.localEulerAngles.y.ToString("F3");
         markerMoved();
     }
 
     public void rotateYMinus() {
         localiser.Rotate(Vector3.down * rotateAmount);
-        rotY.text = (localiser.eulerAngles.y - worldMarker.eulerAngles.y).ToString("F3");
+        rotY.text = localiser.localEulerAngles.y.ToString("F3");
         markerMoved();
     }
 
@@ -374,13 +375,13 @@ public class LocMarkerManager : MonoBehaviour {
 
     public void rotateZPlus() {
         localiser.Rotate(Vector3.forward * rotateAmount);
-        rotZ.text = localiser.eulerAngles.z.ToString("F3");
+        rotZ.text = localiser.localEulerAngles.z.ToString("F3");
         markerMoved();
     }
 
     public void rotateZMinus() {
         localiser.Rotate(Vector3.back * rotateAmount);
-        rotZ.text = localiser.eulerAngles.z.ToString("F3");
+        rotZ.text = localiser.localEulerAngles.z.ToString("F3");
         markerMoved();
     }
 #endregion
@@ -388,8 +389,12 @@ public class LocMarkerManager : MonoBehaviour {
 #region Saving and Loading
     // Store localisation marker position and rotation in PlayerPrefs
     public void save() {
-        simpleSaveButton.interactable = false;
-        complexSaveButton.interactable = false;
+        simpleSaveButton.GetComponent<Interactable>().IsEnabled = false;
+        simpleSaveButton.GetComponent<PressableButtonHoloLens2>().enabled = false;
+        simpleSaveButton.Find("BackPlate/Quad").GetComponent<MeshRenderer>().material = disabledMat;
+        complexSaveButton.GetComponent<Interactable>().IsEnabled = false;
+        complexSaveButton.GetComponent<PressableButtonHoloLens2>().enabled = false;
+        complexSaveButton.Find("BackPlate/Quad").GetComponent<MeshRenderer>().material = disabledMat;
         PlayerPrefs.SetFloat("moveX", localiser.position.x - worldMarker.position.x);
         PlayerPrefs.SetFloat("moveY", localiser.position.y - worldMarker.position.y);
         PlayerPrefs.SetFloat("moveZ", localiser.position.z - worldMarker.position.z);
@@ -445,13 +450,17 @@ public class LocMarkerManager : MonoBehaviour {
 
     // Visual indicator for save button being pressed
     private IEnumerator saveDisplay() {
-        simpleSaveButton.GetComponentInChildren<TextMeshProUGUI>().text = "Saving...";
-        complexSaveButton.GetComponentInChildren<TextMeshProUGUI>().text = "Saving...";
+        simpleSaveButton.Find("IconAndText").GetComponentInChildren<TMP_Text>().text = "Saving...";
+        complexSaveButton.Find("IconAndText").GetComponentInChildren<TMP_Text>().text = "Saving...";
         yield return new WaitForSeconds(0.5f);
-        simpleSaveButton.GetComponentInChildren<TextMeshProUGUI>().text = "Save Offset";
-        complexSaveButton.GetComponentInChildren<TextMeshProUGUI>().text = "Save Offset";
-        simpleSaveButton.interactable = true;
-        complexSaveButton.interactable = true;
+        simpleSaveButton.Find("IconAndText").GetComponentInChildren<TMP_Text>().text = "Save Offset";
+        complexSaveButton.Find("IconAndText").GetComponentInChildren<TMP_Text>().text = "Save Offset";
+        simpleSaveButton.GetComponent<Interactable>().IsEnabled = true;
+        simpleSaveButton.GetComponent<PressableButtonHoloLens2>().enabled = true;
+        simpleSaveButton.Find("BackPlate/Quad").GetComponent<MeshRenderer>().material = enabledMat;
+        complexSaveButton.GetComponent<Interactable>().IsEnabled = true;
+        complexSaveButton.GetComponent<PressableButtonHoloLens2>().enabled = true;
+        complexSaveButton.Find("BackPlate/Quad").GetComponent<MeshRenderer>().material = enabledMat;
     }
 #endregion
 }

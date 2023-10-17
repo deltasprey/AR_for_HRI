@@ -12,7 +12,7 @@ public class CmdVelControl : MonoBehaviour {
     public delegate void MsgReceived(float x, float z, float theta);
     public static event MsgReceived msgValueChanged;
 
-    private string botCommandTopic = "/turtle1/cmd_vel";
+    private string botCommandTopic;
     private float x = 0, z = 0, theta = 0;
     private float oldX, oldZ, oldTheta;
     private float forwardSpeed = 0, angularSpeed = 0;

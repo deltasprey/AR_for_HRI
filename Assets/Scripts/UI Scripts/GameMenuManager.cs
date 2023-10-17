@@ -2,14 +2,15 @@ using UnityEngine;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.Utilities.Solvers;
+using TMPro;
 
 public class GameMenuManager : MonoBehaviour {
-    [SerializeField] private GameObject menu, instructionText;
-    [SerializeField] private Transform player;
+    [SerializeField] private GameObject menu, rosMenu, debugMenu, instructionText;
     [SerializeField] private Interactable attachToggle, spatialToggle, navToggle;
+    [SerializeField] private TMP_Text joyHandedness;
     [SerializeField] private RadialView follow;
-    [SerializeField] private float spawnDistance = 2;
 
+    private JoystickControl joystick;
     private bool navigating = false;
 
     private void OnEnable() {
@@ -23,7 +24,9 @@ public class GameMenuManager : MonoBehaviour {
     }
 
     private void Start() {
-        attachToggle.IsToggled = FindObjectOfType<JoystickControl>().attachToHand;
+        joystick = FindObjectOfType<JoystickControl>();
+        attachToggle.IsToggled = joystick.attachToHand;
+        joyHandedness.text = joystick.lhand ? "Left" : "Right";
         if (instructionText.activeSelf) {
             spatialToggle.IsToggled = true;
             navToggle.IsToggled = true;
@@ -42,9 +45,22 @@ public class GameMenuManager : MonoBehaviour {
     }
 #endif
 
-    private void toggleMenu() {
-        menu.SetActive(!menu.activeSelf);
-        transform.position = player.position + player.forward.normalized * spawnDistance;
+    private void toggleMenu() { menu.SetActive(!menu.activeSelf); }
+    
+    public void toggleMenuFollow() { follow.enabled = !follow.enabled; }
+
+    public void toggleROSMenu() { rosMenu.SetActive(!rosMenu.activeSelf); }
+
+    public void toggleDebugMenu() { debugMenu.SetActive(!debugMenu.activeSelf); }
+
+    public void setHand() {
+        if (joyHandedness.text == "Left") {
+            joyHandedness.text = "Right";
+            joystick.lhand = false;
+        } else {
+            joyHandedness.text = "Left";
+            joystick.lhand = true;
+        }
     }
 
     public void toggleSpatialAwareness() {
@@ -55,7 +71,6 @@ public class GameMenuManager : MonoBehaviour {
         }
     }
 
-    public void toggleMenuFollow() { follow.enabled = !follow.enabled; }
 
     public void toggleNavigation() {
         if (navigating) {

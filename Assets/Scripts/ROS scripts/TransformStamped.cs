@@ -1,5 +1,7 @@
 using Newtonsoft.Json;
+using RosSharp.RosBridgeClient.Messages.Geometry;
 using RosSharp.RosBridgeClient.Messages.Standard;
+using System.Collections.Generic;
 
 namespace RosSharp.RosBridgeClient.Messages.Geometry {
     public class Transform : Message {
@@ -27,6 +29,16 @@ namespace RosSharp.RosBridgeClient.Messages.Geometry {
             header = new Header();
             child_frame_id = "";
             transform = new Transform();
+        }
+    }
+}
+
+namespace RosSharp.RosBridgeClient.Messages {
+    public class TFMessage : Message {
+        public List<TransformStamped> transforms;
+
+        public TFMessage() {
+            transforms = new List<TransformStamped>();
         }
     }
 }

@@ -1,25 +1,41 @@
+using System;
 using TMPro;
 using UnityEngine;
 
-public class Keypad : MonoBehaviour {
-    [SerializeField] GameObject keypad;
-    private TMP_Text inputField;
+[Serializable]
+public class InputLocMapping {
+    public TMP_InputField inputField;
+    public Vector3 keypadPos;
+}
 
-    public void selected(TMP_Text field) {
+public class Keypad : MonoBehaviour {
+    [SerializeField] private GameObject keypad;
+    [SerializeField] private InputLocMapping[] inputKeypadPos;
+    private TMP_InputField inputField;
+
+    public void selected(TMP_InputField field) {
         keypad.SetActive(true);
         inputField = field;
-        if (inputField.transform.name == "IP Text") keypad.transform.position = new Vector3(75, 25);
-        else keypad.transform.position = new Vector3(75, 0);
+        foreach(InputLocMapping mapped in inputKeypadPos) {
+            if (mapped.inputField == field) {
+                keypad.transform.localPosition = mapped.keypadPos;
+                break;
+            }
+        }
     }
 
     public void close() { keypad.SetActive(false); }
 
     public void input(int number) {
-        if (number > 0) inputField.text += number.ToString();
-        else inputField.text += ".";
+        if (inputField.text.Length < (inputField.characterLimit > 0 ? inputField.characterLimit : 32)) {
+            if (number >= 0) inputField.text += number.ToString();
+            else inputField.text += ".";
+        }
     }
 
-    public void backspace() {
-        inputField.text = inputField.text[..(inputField.text.Length - 1)];
+    public void backspace() { 
+        if (inputField.text.Length > 0) inputField.text = inputField.text[..(inputField.text.Length - 1)]; 
     }
+
+    public void clear() { inputField.text = ""; }
 }
