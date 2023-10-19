@@ -5,8 +5,8 @@ using Microsoft.MixedReality.Toolkit.Utilities.Solvers;
 using TMPro;
 
 public class GameMenuManager : MonoBehaviour {
-    [SerializeField] private GameObject menu, rosMenu, debugMenu, instructionText;
-    [SerializeField] private Interactable attachToggle, spatialToggle, navToggle;
+    [SerializeField] private GameObject menu, rosMenu, debugMenu, voiceMenu, instructionText;
+    [SerializeField] private Interactable attachToggle, navToggle;
     [SerializeField] private TMP_Text joyHandedness;
     [SerializeField] private RadialView follow;
 
@@ -28,7 +28,6 @@ public class GameMenuManager : MonoBehaviour {
         attachToggle.IsToggled = joystick.attachToHand;
         joyHandedness.text = joystick.lhand ? "Left" : "Right";
         if (instructionText.activeSelf) {
-            spatialToggle.IsToggled = true;
             navToggle.IsToggled = true;
             navigating = true;
         } else CoreServices.SpatialAwarenessSystem.Disable();
@@ -53,6 +52,8 @@ public class GameMenuManager : MonoBehaviour {
 
     public void toggleDebugMenu() { debugMenu.SetActive(!debugMenu.activeSelf); }
 
+    public void toggleVoiceMenu() { voiceMenu.SetActive(!voiceMenu.activeSelf); }
+
     public void setHand() {
         if (joyHandedness.text == "Left") {
             joyHandedness.text = "Right";
@@ -63,26 +64,15 @@ public class GameMenuManager : MonoBehaviour {
         }
     }
 
-    public void toggleSpatialAwareness() {
-        if (spatialToggle.IsToggled) CoreServices.SpatialAwarenessSystem.Enable();
-        else {
-            CoreServices.SpatialAwarenessSystem.Disable();
-            if (navigating) toggleNavigation();
-        }
-    }
-
-
     public void toggleNavigation() {
         if (navigating) {
             CoreServices.SpatialAwarenessSystem.Disable();
             instructionText.SetActive(false);
-            spatialToggle.IsToggled = false;
             navToggle.IsToggled = false;
             navigating = false;
         } else {
             CoreServices.SpatialAwarenessSystem.Enable();
             instructionText.SetActive(true);
-            spatialToggle.IsToggled = true;
             navToggle.IsToggled = true;
             navigating = true;
         }

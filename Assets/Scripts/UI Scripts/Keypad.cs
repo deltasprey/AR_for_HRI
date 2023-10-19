@@ -26,11 +26,8 @@ public class Keypad : MonoBehaviour {
 
     public void close() { keypad.SetActive(false); }
 
-    public void input(int number) {
-        if (inputField.text.Length < (inputField.characterLimit > 0 ? inputField.characterLimit : 32)) {
-            if (number >= 0) inputField.text += number.ToString();
-            else inputField.text += ".";
-        }
+    public void input(string number) {
+        if (inputField.text.Length < (inputField.characterLimit > 0 ? inputField.characterLimit : 32)) inputField.text += number;
     }
 
     public void backspace() { 

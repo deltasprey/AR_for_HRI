@@ -14,6 +14,7 @@ public class SpeechManager : MonoBehaviour, IMixedRealitySpeechHandler {
     // Create a dictionary to map string keys to SpeechEvent events.
     private static Dictionary<string, SpeechEvent> speechEventDictionary = new();
     private static Dictionary<string, SpeechEvent> speechSafeEventDictionary = new();
+    private Coroutine tout;
     private bool listening = false;
 
     private void OnEnable() { CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this); }
@@ -24,6 +25,7 @@ public class SpeechManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
     // Subscribe a method to a SpeechEvent with a given key.
     public static void AddListener(string key, SpeechEvent listener, bool safe = false) {
+        key = key.ToLower();
         if (safe) {
             if (!speechSafeEventDictionary.ContainsKey(key)) {
                 speechSafeEventDictionary[key] = null; // Initialize the event if it doesn't exist.
@@ -39,6 +41,7 @@ public class SpeechManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
     // Unsubscribe a method from a SpeechEvent with a given key.
     public static void RemoveListener(string key, SpeechEvent listener) {
+        key = key.ToLower();
         if (speechEventDictionary.ContainsKey(key)) {
             speechEventDictionary[key] -= listener; // Remove the listener from the event.
         }
@@ -49,6 +52,7 @@ public class SpeechManager : MonoBehaviour, IMixedRealitySpeechHandler {
 
     // Invoke the SpeechEvent with a given key.
     public static void InvokeEvent(string key, bool listening = false) {
+        key = key.ToLower();
         if (key == "stop") {
             stop?.Invoke();
         } if (speechSafeEventDictionary.ContainsKey(key) && speechSafeEventDictionary[key] != null) {
@@ -63,13 +67,13 @@ public class SpeechManager : MonoBehaviour, IMixedRealitySpeechHandler {
         if (cmd == "stop") {
             stop?.Invoke();
         } else if (cmd == "command") {
-            StopAllCoroutines();
+            if (tout != null) StopCoroutine(tout);
             listening = true;
             listeningText.SetActive(true);
-            StartCoroutine(timeout());
+            tout = StartCoroutine(timeout());
         } else {
             InvokeEvent(cmd, listening);
-            StopAllCoroutines();
+            if (tout != null) StopCoroutine(tout);
             listening = false;
             listeningText.SetActive(false);
         }

@@ -8,6 +8,7 @@ public class PurePursuit : MonoBehaviour {
 
     private LocMarkerManager markerManager;
     private TapToPlaceControllerEye navMarkers;
+    private Coroutine driveCo;
     private Vector2 rosPos, rosTargetPos2D = Vector2.zero;
     private float rosTheta, targetTheta, turnRate;
     private bool follow = false;
@@ -39,7 +40,7 @@ public class PurePursuit : MonoBehaviour {
             targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg;
             turnRate = (targetTheta - rosTheta) > 0 ? 0.6f : -0.6f;
             if (!navigating) {
-                StartCoroutine(drive(turnRate, 0, 1));
+                driveCo = StartCoroutine(drive(turnRate, 0, 1));
                 navigating = true;
             }
         }
@@ -54,7 +55,7 @@ public class PurePursuit : MonoBehaviour {
     }
 
     private void stopCmds() {
-        StopAllCoroutines();
+        if (driveCo != null) StopCoroutine(driveCo);
         turn = 0;
         forward = 0;
         follow = false;
@@ -68,7 +69,7 @@ public class PurePursuit : MonoBehaviour {
     private void path(SelfInteract marker) { initialisePursuit(navMarkers.markers[0].GetComponent<SelfInteract>(), true); }
 
     private void initialisePursuit(SelfInteract marker, bool pathing) {
-        StopAllCoroutines();
+        if (driveCo != null) StopCoroutine(driveCo);
         Vector3 rosTargetPos3D = markerManager.rotationMatrix.inverse.MultiplyPoint(new Vector3(marker.transform.position.x, 0, marker.transform.position.z) - markerManager.offset);
         rosTargetPos2D = new(rosTargetPos3D.z, rosTargetPos3D.x);
         //print($"rosPos = {rosPos} | rosTargetPos = {rosTargetPos2D} | Robot theta = {rosTheta}");
@@ -81,7 +82,7 @@ public class PurePursuit : MonoBehaviour {
 
         // Start driving
         int stopId = int.Parse(marker.label.text);
-        StartCoroutine(drive(turnRate, pathing ? 0 : stopId - 1 , stopId));
+        driveCo = StartCoroutine(drive(turnRate, pathing ? 0 : stopId - 1 , stopId));
     }
     
     IEnumerator drive(float turnRate, int startId, int stopId) {

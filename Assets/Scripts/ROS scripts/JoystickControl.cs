@@ -17,6 +17,7 @@ public class JoystickControl : MonoBehaviour {
     public bool attachToHand = false, lhand = true;
 
     private bool tracking = false;
+    private Coroutine track;
     private Vector3 topPos, topRot;
     private MixedRealityPose pose;
     private float x, y;
@@ -54,10 +55,10 @@ public class JoystickControl : MonoBehaviour {
         if (attachToHand) {
             if (HandJointUtils.TryGetJointPose(TrackedHandJoint.Palm, lhand ? Handedness.Left : Handedness.Right, out pose)) {
                 if (!tracking) {
-                    StopAllCoroutines();
+                    if (track != null) StopCoroutine(track);
                     transform.position = pose.Position;
                     tracking = true;
-                    StartCoroutine(trackHand());
+                    track = StartCoroutine(trackHand());
                 }
             } else if (tracking) tracking = false;
         }

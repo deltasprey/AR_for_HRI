@@ -10,19 +10,21 @@ public class LocMarkerManager : MonoBehaviour {
     public Matrix4x4 rotationMatrix { get; private set; }
     public Vector3 offset { get; private set; }
     public float offsetTheta { get; private set; }
+    public bool isFocused { private get; set; } = true;
 
     [SerializeField] private QRCode qr;
-    [SerializeField] private GameObject simpleGUI, complexGUI;
+    [SerializeField] private GameObject simpleGUI;
     [SerializeField] private Material sphere;
     [SerializeField] private Transform localiser, worldMarker, safetyZone, simpleSaveButton, complexSaveButton; 
     [SerializeField] private Slider simpleScaleSlider, complexScaleSlider, simpleSafetySlider, complexSafetySlider;
     [SerializeField] private TextMeshProUGUI simpleScaleSliderText, complexScaleSliderText, simpleSafetySliderText, complexSafetySliderText;
     [SerializeField] private TMP_Dropdown moveStep, rotateStep;
     [SerializeField] private TMP_InputField moveX, moveY, moveZ, rotX, rotY, rotZ;
-    [SerializeField] private Material enabledMat, disabledMat;
+    [SerializeField] private Material enabledMat;
 
     private Transform player, root;
     private CmdVelControl rosPose;
+    private Coroutine aUp, aDown;
     private Vector3 position;
     private Quaternion rotation;
     private readonly float[] moveAmounts = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.5f };
@@ -52,7 +54,7 @@ public class LocMarkerManager : MonoBehaviour {
 
         moveAmount = moveAmounts[moveStep.value];
         rotateAmount = rotateAmounts[rotateStep.value];
-        StartCoroutine(alphaUp());
+        aUp = StartCoroutine(alphaUp());
 
         Invoke(nameof(readQR), 0.5f);
     }
@@ -88,12 +90,6 @@ public class LocMarkerManager : MonoBehaviour {
         //}
 
         transform.position = new Vector3(worldMarker.position.x, (player.position.y + worldMarker.position.y)/2, worldMarker.position.z);
-        transform.LookAt(player);
-        transform.forward *= -1;
-        simpleGUI.transform.LookAt(player);
-        simpleGUI.transform.forward *= -1;
-        complexGUI.transform.LookAt(player);
-        complexGUI.transform.forward *= -1;
     }
 
     private void OnEnable() {
@@ -131,18 +127,18 @@ public class LocMarkerManager : MonoBehaviour {
     }
 
     private void QROffset(float x, float y, float z) {
-        localiser.position = worldMarker.position + localiser.forward * x + localiser.up * y + localiser.right * z;
-        moveX.text = localiser.localPosition.x.ToString();
-        moveY.text = localiser.localPosition.y.ToString();
-        moveZ.text = localiser.localPosition.z.ToString();
+        localiser.position = worldMarker.position + localiser.right * x + localiser.up * y + localiser.forward * z;
+        isFocused = false; moveX.text = localiser.localPosition.x.ToString();
+        isFocused = false; moveY.text = localiser.localPosition.y.ToString();
+        isFocused = false; moveZ.text = localiser.localPosition.z.ToString();
     }
 
     private void QROffsetRotation(float x, float y, float z, float rx, float ry, float rz) {
         localiser.eulerAngles = new Vector3(rx, worldMarker.eulerAngles.y + ry, rz);
         QROffset(x, y, z);
-        rotX.text = localiser.localEulerAngles.x.ToString();
-        rotY.text = localiser.localEulerAngles.y.ToString();
-        rotZ.text = localiser.localEulerAngles.z.ToString();
+        isFocused = false; rotX.text = localiser.eulerAngles.x.ToString("F3");
+        isFocused = false; rotY.text = localiser.localEulerAngles.y.ToString("F3");
+        isFocused = false; rotZ.text = localiser.eulerAngles.z.ToString("F3");
     }
 
     // Robot position changed event callback
@@ -188,19 +184,14 @@ public class LocMarkerManager : MonoBehaviour {
 #region Marker Object UI Control
     // View virtual marker in sphere mode
     public void viewSphere() {
-        StopCoroutine(alphaDown());
-        StartCoroutine(alphaUp());
-        localiser.GetComponent<SphereCollider>().enabled = true;
-        localiser.GetComponent<Outline>().OutlineWidth = 5;
+        if (aDown != null) StopCoroutine(aDown);
+        aUp = StartCoroutine(alphaUp());
     }
 
     // View virtual marker in coordinate frame mode
     public void viewFrame() {
-        StopCoroutine(alphaUp());
-        StartCoroutine(alphaDown());
-        localiser.GetComponent<SphereCollider>().enabled = false;
-        localiser.GetComponent<Outline>().OutlineWidth = -1;
-        localiser.GetComponent<Outline>().enabled = false;
+        if (aUp != null) StopCoroutine(aUp);
+        aDown = StartCoroutine(alphaDown());
     }
 
     // Change the size of the virtual marker
@@ -241,16 +232,6 @@ public class LocMarkerManager : MonoBehaviour {
 #endregion
 
 #region Complex UI Button Callbacks
-    public void viewSimpleControls() {
-        simpleGUI.SetActive(true);
-        complexGUI.SetActive(false);
-    }
-
-    public void viewComplexControls() {
-        simpleGUI.SetActive(false);
-        complexGUI.SetActive(true);
-    }
-
     public void changeMoveAmount() { moveAmount = moveAmounts[moveStep.value]; }
 
     public void changeRotateAmount() { rotateAmount = rotateAmounts[rotateStep.value]; }
@@ -272,116 +253,128 @@ public class LocMarkerManager : MonoBehaviour {
     }
 
     public void changeMoveX() {
-        if (rotX.isFocused && float.TryParse(moveX.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float xShift)) {
-            localiser.position = new Vector3(worldMarker.position.x + xShift, localiser.position.y, localiser.position.z);
-            markerMoved();
-        }
+        if (isFocused) {
+            if (float.TryParse(moveX.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float xShift)) {
+                localiser.position = new Vector3(worldMarker.position.x + xShift, localiser.position.y, localiser.position.z);
+                markerMoved();
+            }
+        } else isFocused = true;
     }
 
     public void moveXPlus() {
         localiser.Translate(Vector3.right * moveAmount);
-        moveX.text = localiser.localPosition.x.ToString();
+        isFocused = false; moveX.text = localiser.localPosition.x.ToString();
         markerMoved();
     }
 
     public void moveXMinus() {
         localiser.Translate(Vector3.left * moveAmount);
-        moveX.text = localiser.localPosition.x.ToString();
+        isFocused = false; moveX.text = localiser.localPosition.x.ToString();
         markerMoved();
     }
 
     public void changeMoveY() {
-        if (rotY.isFocused && float.TryParse(moveY.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float yShift)) {
-            localiser.position = new Vector3(localiser.position.x, worldMarker.position.y + yShift, localiser.position.z);
-            markerMoved();
-        }
+        if (isFocused) {
+            if (float.TryParse(moveY.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float yShift)) {
+                localiser.position = new Vector3(localiser.position.x, worldMarker.position.y + yShift, localiser.position.z);
+                markerMoved();
+            }
+        } else isFocused = true;
     }
 
     public void moveYPlus() {
         localiser.Translate(Vector3.up * moveAmount);
-        moveY.text = localiser.localPosition.y.ToString();
+        isFocused = false; moveY.text = localiser.localPosition.y.ToString();
         markerMoved();
     }
 
     public void moveYMinus() {
         localiser.Translate(Vector3.down * moveAmount);
-        moveY.text = localiser.localPosition.y.ToString();
+        isFocused = false; moveY.text = localiser.localPosition.y.ToString();
         markerMoved();
     }
 
     public void changeMoveZ() {
-        if (rotZ.isFocused && float.TryParse(moveZ.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float zShift)) {
-            localiser.position = new Vector3(localiser.position.x, localiser.position.y, worldMarker.position.z + zShift);
-            markerMoved();
-        }
+        if (isFocused) {
+            if (float.TryParse(moveZ.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float zShift)) {
+                localiser.position = new Vector3(localiser.position.x, localiser.position.y, worldMarker.position.z + zShift);
+                markerMoved();
+            }
+        } else isFocused = true;
     }
 
     public void moveZPlus() {
         localiser.Translate(Vector3.forward * moveAmount);
-        moveZ.text = localiser.localPosition.z.ToString();
+        isFocused = false; moveZ.text = localiser.localPosition.z.ToString();
         markerMoved();
     }
 
     public void moveZMinus() {
         localiser.Translate(Vector3.back * moveAmount);
-        moveZ.text = localiser.localPosition.z.ToString();
+        isFocused = false; moveZ.text = localiser.localPosition.z.ToString();
         markerMoved();
     }
 
     public void changeRotateX() {
-        if (started && float.TryParse(rotX.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float xShift)) {
-            localiser.rotation = Quaternion.Euler(xShift, localiser.eulerAngles.y, localiser.eulerAngles.z);
-            markerMoved();
-        }
+        if (isFocused) {
+            if (float.TryParse(rotX.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float xShift)) {
+                localiser.rotation = Quaternion.Euler(xShift, localiser.eulerAngles.y, localiser.eulerAngles.z);
+                markerMoved();
+            }
+        } else isFocused = true;
     }
 
     public void rotateXPlus() {
         localiser.Rotate(Vector3.right * rotateAmount);
-        rotX.text = localiser.localEulerAngles.x.ToString("F3");
+        isFocused = false; rotX.text = localiser.eulerAngles.x.ToString("F3");
         markerMoved();
     }
 
     public void rotateXMinus() {
         localiser.Rotate(Vector3.left * rotateAmount);
-        rotX.text = localiser.localEulerAngles.x.ToString("F3");
+        isFocused = false; rotX.text = localiser.eulerAngles.x.ToString("F3");
         markerMoved();
     }
 
     public void changeRotateY() {
-        if (started && float.TryParse(rotY.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float yShift)) {
-            localiser.rotation = Quaternion.Euler(localiser.eulerAngles.x, worldMarker.eulerAngles.y + yShift, localiser.eulerAngles.z);
-            markerMoved();
-        }
+        if (isFocused) {
+            if (float.TryParse(rotY.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float yShift)) {
+                localiser.localEulerAngles = new Vector3(localiser.localEulerAngles.x, yShift, localiser.localEulerAngles.z);
+                markerMoved();
+            }
+        } else isFocused = true;
     }
 
     public void rotateYPlus() {
         localiser.Rotate(Vector3.up * rotateAmount);
-        rotY.text = localiser.localEulerAngles.y.ToString("F3");
+        isFocused = false; rotY.text = localiser.localEulerAngles.y.ToString("F3");
         markerMoved();
     }
 
     public void rotateYMinus() {
         localiser.Rotate(Vector3.down * rotateAmount);
-        rotY.text = localiser.localEulerAngles.y.ToString("F3");
+        isFocused = false; rotY.text = localiser.localEulerAngles.y.ToString("F3");
         markerMoved();
     }
 
     public void changeRotateZ() {
-        if (started && float.TryParse(rotZ.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float zShift)) {
-            localiser.rotation = Quaternion.Euler(localiser.eulerAngles.x, localiser.eulerAngles.y, zShift);
-            markerMoved();
-        }
+        if (isFocused) {
+            if (float.TryParse(rotZ.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float zShift)) {
+                localiser.rotation = Quaternion.Euler(localiser.eulerAngles.x, localiser.eulerAngles.y, zShift);
+                markerMoved();
+            }
+        } else isFocused = true;
     }
 
     public void rotateZPlus() {
         localiser.Rotate(Vector3.forward * rotateAmount);
-        rotZ.text = localiser.localEulerAngles.z.ToString("F3");
+        isFocused = false; rotZ.text = localiser.eulerAngles.z.ToString("F3");
         markerMoved();
     }
 
     public void rotateZMinus() {
         localiser.Rotate(Vector3.back * rotateAmount);
-        rotZ.text = localiser.localEulerAngles.z.ToString("F3");
+        isFocused = false; rotZ.text = localiser.eulerAngles.z.ToString("F3");
         markerMoved();
     }
 #endregion
@@ -389,17 +382,11 @@ public class LocMarkerManager : MonoBehaviour {
 #region Saving and Loading
     // Store localisation marker position and rotation in PlayerPrefs
     public void save() {
-        simpleSaveButton.GetComponent<Interactable>().IsEnabled = false;
-        simpleSaveButton.GetComponent<PressableButtonHoloLens2>().enabled = false;
-        simpleSaveButton.Find("BackPlate/Quad").GetComponent<MeshRenderer>().material = disabledMat;
-        complexSaveButton.GetComponent<Interactable>().IsEnabled = false;
-        complexSaveButton.GetComponent<PressableButtonHoloLens2>().enabled = false;
-        complexSaveButton.Find("BackPlate/Quad").GetComponent<MeshRenderer>().material = disabledMat;
-        PlayerPrefs.SetFloat("moveX", localiser.position.x - worldMarker.position.x);
-        PlayerPrefs.SetFloat("moveY", localiser.position.y - worldMarker.position.y);
-        PlayerPrefs.SetFloat("moveZ", localiser.position.z - worldMarker.position.z);
+        PlayerPrefs.SetFloat("moveX", localiser.localPosition.x);
+        PlayerPrefs.SetFloat("moveY", localiser.localPosition.y);
+        PlayerPrefs.SetFloat("moveZ", localiser.localPosition.z);
         PlayerPrefs.SetFloat("rotX", localiser.eulerAngles.x);
-        PlayerPrefs.SetFloat("rotY", (localiser.eulerAngles.y - worldMarker.eulerAngles.y));
+        PlayerPrefs.SetFloat("rotY", localiser.localEulerAngles.y);
         PlayerPrefs.SetFloat("rotZ", localiser.eulerAngles.z);
         PlayerPrefs.Save();
         StartCoroutine(saveDisplay());
@@ -414,14 +401,16 @@ public class LocMarkerManager : MonoBehaviour {
             float xRot = PlayerPrefs.GetFloat("rotX");
             float yRot = PlayerPrefs.GetFloat("rotY");
             float zRot = PlayerPrefs.GetFloat("rotZ");
-            localiser.SetPositionAndRotation(worldMarker.position + new Vector3(xShift, yShift, zShift), Quaternion.Euler(xRot, worldMarker.eulerAngles.y + yRot, zRot));
+            localiser.localPosition = new Vector3(xShift, yShift, zShift);
+            localiser.rotation = Quaternion.Euler(xRot, 0, zRot);
+            localiser.localEulerAngles = new Vector3(localiser.localEulerAngles.x, yRot, localiser.localEulerAngles.z);
 
-            moveX.text = (localiser.position.x - worldMarker.position.x).ToString();
-            moveY.text = (localiser.position.y - worldMarker.position.y).ToString();
-            moveZ.text = (localiser.position.z - worldMarker.position.z).ToString();
-            rotX.text = localiser.eulerAngles.x.ToString();
-            rotY.text = (localiser.eulerAngles.y - worldMarker.eulerAngles.y).ToString();
-            rotZ.text = localiser.eulerAngles.z.ToString();
+            isFocused = false; moveX.text = localiser.localPosition.x.ToString();
+            isFocused = false; moveY.text = localiser.localPosition.y.ToString();
+            isFocused = false; moveZ.text = localiser.localPosition.z.ToString();
+            isFocused = false; rotX.text = localiser.eulerAngles.x.ToString("F3");
+            isFocused = false; rotY.text = localiser.localEulerAngles.y.ToString("F3");
+            isFocused = false; rotZ.text = localiser.eulerAngles.z.ToString("F3");
             markerMoved();
         }
     }

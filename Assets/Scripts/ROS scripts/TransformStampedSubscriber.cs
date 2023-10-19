@@ -43,11 +43,13 @@ public class TransformStampedSubscriber : MonoBehaviour {
 
     // Called when a pose message is recevied from the subscribed ROS topic
     private void poseCallback(TransformStamped msg) {
-        translation = TransformExtensions.Ros2Unity(msg.transform.translation);
-        rotation = TransformExtensions.Ros2Unity(msg.transform.rotation);
-        x = translation.x;
-        z = translation.z;
-        theta = rotation.eulerAngles.y;
-        if (!initialised) initialised = true;
+        if (msg.child_frame_id == "odom") {
+            translation = TransformExtensions.Ros2Unity(msg.transform.translation);
+            rotation = TransformExtensions.Ros2Unity(msg.transform.rotation);
+            x = translation.x;
+            z = translation.z;
+            theta = rotation.eulerAngles.y;
+            if (!initialised) initialised = true;
+        }
     }
 }

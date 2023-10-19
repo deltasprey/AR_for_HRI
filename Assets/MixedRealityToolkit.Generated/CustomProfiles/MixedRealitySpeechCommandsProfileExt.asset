@@ -45,27 +45,6 @@ MonoBehaviour:
       description: Toggle Profiler
       axisConstraint: 0
   - localizationKey: 
-    keyword: Fireworks
-    keyCode: 0
-    action:
-      id: 0
-      description: None
-      axisConstraint: 0
-  - localizationKey: 
-    keyword: Track Marker
-    keyCode: 0
-    action:
-      id: 0
-      description: None
-      axisConstraint: 0
-  - localizationKey: 
-    keyword: Lock Marker
-    keyCode: 0
-    action:
-      id: 0
-      description: None
-      axisConstraint: 0
-  - localizationKey: 
     keyword: Stop
     keyCode: 0
     action:

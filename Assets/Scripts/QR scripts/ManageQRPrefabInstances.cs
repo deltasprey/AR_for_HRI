@@ -1,9 +1,8 @@
 using UnityEngine;
 using QRTracking;
-using System.Collections;
 
 public class ManageQRPrefabInstances : MonoBehaviour {
-    [SerializeField] private bool spawnOnLoad = false;
+    [SerializeField] private bool spawnOnLoad = false, spawnRotated = false;
 
     private QRCodesManager manager;
     private QRCodesVisualizer visualizer;
@@ -39,9 +38,9 @@ public class ManageQRPrefabInstances : MonoBehaviour {
     }
 
     private void spawnMarker() {
-        GameObject qrCodePrefab = visualizer.qrCodePrefab;
-        //GameObject marker = Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.Euler(200, 45, 0));
-        GameObject marker = Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.identity);
+        GameObject qrCodePrefab = visualizer.qrCodePrefab, marker;
+        if (spawnRotated) marker = Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.Euler(200, 45, 0));
+        else marker = Instantiate(qrCodePrefab, new Vector3(0, 0, 1), Quaternion.identity);
         visualizer.markerManuallySpawned(marker.transform.Find("Local Marker").transform);
     }
 #endif
@@ -59,14 +58,12 @@ public class ManageQRPrefabInstances : MonoBehaviour {
     private void Instance_QRCodesTrackingStateChanged(object sender, bool status) {
         if (!status) {
             print("Restarting QR Tracking");
-            StartCoroutine(restartQR());
+            Invoke(nameof(restartQR), 1);
         }
     }
 
-    IEnumerator restartQR() {
-        yield return new WaitForSeconds(1);
+    private void restartQR() {
         visualizer.enabled = true;
         manager.StartQRTracking();
-        yield return null;
     }
 }
