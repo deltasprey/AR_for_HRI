@@ -7,18 +7,17 @@ public class CmdVelControl : MonoBehaviour {
     [SerializeField] private JoystickControl joystick;
     [SerializeField] private PurePursuit purePursuit;
     [SerializeField] private float linearSpeed = 1f, turnSpeed = 1f;
-    [SerializeField] private bool stopOnLoad = true;
+    [SerializeField] private bool usingTF = true, stopOnLoad = true;
 
     public delegate void MsgReceived(float x, float z, float theta);
     public static event MsgReceived msgValueChanged;
 
     private string botCommandTopic;
-    private float x = 0, z = 0, theta = 0;
-    private float oldX, oldZ, oldTheta;
-    private float forwardSpeed = 0, angularSpeed = 0;
-    private bool isGrabbed = false, initialised = false, offsetted = false, stop = true;
+    private float x, z, theta, oldX, oldZ, oldTheta, forwardSpeed = 0, angularSpeed = 0;
+    private bool isGrabbed = false, initialised = false, stop = true;
     private Twist twistMessage;
     private RosSocket rosSocket;
+    private TFSubscriber tfRef;
     private ExtOdometrySubscriber odomRef;
 
     private void Start() {
@@ -28,24 +27,27 @@ public class CmdVelControl : MonoBehaviour {
         botCommandTopic = GetComponent<TwistPublisher>().Topic;
         rosSocket = GetComponent<RosConnector>().RosSocket;
         odomRef = GetComponent<ExtOdometrySubscriber>();
+        tfRef = GetComponent<TFSubscriber>();
         twistMessage = new Twist();
     }
 
     private void OnEnable() {
         ExtOdometrySubscriber.msgValueChanged += poseUpdated;
+        TFSubscriber.initialisedEvent += poseInitialised;
         SpeechManager.stop += stopCmds;
         SpeechManager.AddListener("restart", restartCmds);
     }
 
     private void OnDisable() {
         ExtOdometrySubscriber.msgValueChanged -= poseUpdated;
+        TFSubscriber.initialisedEvent -= poseInitialised;
         SpeechManager.stop -= stopCmds;
         SpeechManager.RemoveListener("restart", restartCmds);
     }
 
     private void Update() {
         if (!stop) {
-            // Detect joystick input
+            // Detect joystick (priority) or pure pursuit input
             if (joystick.isGrabbed) {
                 forwardSpeed = joystick.rotation.x * linearSpeed;
                 angularSpeed = joystick.rotation.y * turnSpeed;
@@ -67,22 +69,22 @@ public class CmdVelControl : MonoBehaviour {
 
             // Publish the Twist message to control the robot
             rosSocket.Publish(botCommandTopic, twistMessage);
+        }
 
-            // Update the pose of the robot in Unity
-            if (initialised && offsetted) {
-                if (x != oldX || z != oldZ || theta != oldTheta) {
-                    // Invoke pose updated event if the robot has moved (poseCallback has been called)
-                    msgValueChanged?.Invoke(x, z, theta);
-                    oldX = x;
-                    oldZ = z;
-                    oldTheta = theta;
-                    //Debug.Log($"{position.x}, {position.y}, {position.z}");
-                }
-            } else if (initialised) {
+        // Update the pose of the robot in Unity
+        if (usingTF) {
+            x = tfRef.x;
+            z = tfRef.z;
+            theta = tfRef.theta;
+        }
+        if (initialised) {
+            if (x != oldX || z != oldZ || theta != oldTheta) {
+                // Invoke pose updated event if the robot has moved
+                msgValueChanged?.Invoke(x, z, theta);
                 oldX = x;
                 oldZ = z;
                 oldTheta = theta;
-                offsetted = true;
+                //Debug.Log($"x: {x}, z: {z}, theta: {theta}");
             }
         }
     }
@@ -100,6 +102,16 @@ public class CmdVelControl : MonoBehaviour {
         if (!initialised) {
             initialised = true;
             msgValueChanged?.Invoke(x, z, theta);
+        }
+    }
+
+    // Get the inital odometry pose
+    private void poseInitialised() {
+        if (usingTF) {
+            x = tfRef.x; oldX = x;
+            z = tfRef.z; oldZ = z;
+            theta = tfRef.theta; oldTheta = theta;
+            initialised = true;
         }
     }
 

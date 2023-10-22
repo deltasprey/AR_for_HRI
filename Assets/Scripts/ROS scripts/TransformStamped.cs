@@ -19,7 +19,7 @@ namespace RosSharp.RosBridgeClient.Messages.Geometry {
 
     public class TransformStamped : Message {
         [JsonIgnore]
-        public const string RosMessageName = "tf2_msgs/TFMessage";
+        public const string RosMessageName = "geometry_msgs/TransformStamped";
 
         public Header header;
         public string child_frame_id;
@@ -35,6 +35,9 @@ namespace RosSharp.RosBridgeClient.Messages.Geometry {
 
 namespace RosSharp.RosBridgeClient.Messages {
     public class TFMessage : Message {
+        [JsonIgnore]
+        public const string RosMessageName = "tf2_msgs/TFMessage";
+
         public List<TransformStamped> transforms;
 
         public TFMessage() {

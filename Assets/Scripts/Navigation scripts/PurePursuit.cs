@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 public class PurePursuit : MonoBehaviour {
     public bool navigating { get; private set; }
@@ -9,6 +10,7 @@ public class PurePursuit : MonoBehaviour {
     private LocMarkerManager markerManager;
     private TapToPlaceControllerEye navMarkers;
     private Coroutine driveCo;
+    private Vector3 rosTargetPos3D;
     private Vector2 rosPos, rosTargetPos2D = Vector2.zero;
     private float rosTheta, targetTheta, turnRate;
     private bool follow = false;
@@ -36,8 +38,9 @@ public class PurePursuit : MonoBehaviour {
 
     private void Update() {
         if (follow) {
-            rosTargetPos2D = new(Camera.main.transform.position.z, Camera.main.transform.position.x);
-            targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg;
+            rosTargetPos3D = markerManager.rotationMatrix.inverse.MultiplyPoint(new Vector3(Camera.main.transform.position.x, 0, Camera.main.transform.position.z) - markerManager.offset);
+            rosTargetPos2D = new(rosTargetPos3D.z, rosTargetPos3D.x);
+            targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg; // Massively negative???
             turnRate = (targetTheta - rosTheta) > 0 ? 0.6f : -0.6f;
             if (!navigating) {
                 driveCo = StartCoroutine(drive(turnRate, 0, 1));
@@ -70,12 +73,13 @@ public class PurePursuit : MonoBehaviour {
 
     private void initialisePursuit(SelfInteract marker, bool pathing) {
         if (driveCo != null) StopCoroutine(driveCo);
-        Vector3 rosTargetPos3D = markerManager.rotationMatrix.inverse.MultiplyPoint(new Vector3(marker.transform.position.x, 0, marker.transform.position.z) - markerManager.offset);
+        rosTargetPos3D = markerManager.rotationMatrix.inverse.MultiplyPoint(new Vector3(marker.transform.position.x, 0, marker.transform.position.z) - markerManager.offset);
         rosTargetPos2D = new(rosTargetPos3D.z, rosTargetPos3D.x);
         //print($"rosPos = {rosPos} | rosTargetPos = {rosTargetPos2D} | Robot theta = {rosTheta}");
 
         targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg;
-        //print($"Target theta = {targetTheta}");
+        print($"Target theta = {targetTheta}");
+        print($"Robot theta = {rosTheta}");
 
         turnRate = (targetTheta - rosTheta) > 0 ? 0.6f : -0.6f;
         navigating = true;
