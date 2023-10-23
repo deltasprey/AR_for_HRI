@@ -39,9 +39,13 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
         SelfInteract.ignoreMe += ignoreMarker;
     }
 
-    private void OnEnable() { CoreServices.InputSystem?.RegisterHandler<IMixedRealityFocusHandler>(this); }
+    private void OnEnable() { 
+        CoreServices.InputSystem?.RegisterHandler<IMixedRealityFocusHandler>(this);
+        SpeechManager.AddListener("clear markers", removeAllMarkers, true);
+    }
 
     private void OnDisable() {
+        SpeechManager.RemoveListener("clear markers", removeAllMarkers);
         try { CoreServices.InputSystem?.UnregisterHandler<IMixedRealityFocusHandler>(this); } catch { }
     }
 
@@ -126,11 +130,10 @@ public class TapToPlaceControllerEye : MonoBehaviour, IMixedRealityFocusHandler 
     }
 
     public void removeAllMarkers() {
-        lineRenderer.positionCount = 1;
-        for (int i = 0; i < markers.Count; i++) {
-            Destroy(markers[i]);
-            markers.RemoveAt(i);
-        }
+        count = 1;
+        lineRenderer.positionCount = count;
+        foreach (GameObject marker in markers) Destroy(marker);
+        markers.Clear();
     }
 
     public void indicateMarkerLoc() {

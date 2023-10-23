@@ -6,7 +6,7 @@ using TMPro;
 
 public class GameMenuManager : MonoBehaviour {
     [SerializeField] private GameObject menu, rosMenu, debugMenu, voiceMenu, instructionText;
-    [SerializeField] private Interactable attachToggle, navToggle;
+    [SerializeField] private Interactable followToggle, attachToggle, navToggle;
     [SerializeField] private TMP_Text joyHandedness;
     [SerializeField] private RadialView follow;
 
@@ -25,6 +25,7 @@ public class GameMenuManager : MonoBehaviour {
 
     private void Start() {
         joystick = FindObjectOfType<JoystickControl>();
+        followToggle.IsToggled = follow.enabled;
         attachToggle.IsToggled = joystick.attachToHand;
         joyHandedness.text = joystick.lhand ? "Left" : "Right";
         if (instructionText.activeSelf) {

@@ -11,10 +11,12 @@ public class JoystickControl : MonoBehaviour {
     public bool stopped { private get; set; } = true;
     public Vector3 rotation { get; private set; }
 
-    [SerializeField] private float deadZone = 0.05f;
     [SerializeField] private TMP_Text forward, right;
     [SerializeField] private GameObject stop, go;
+
     public bool attachToHand = false, lhand = true;
+    [SerializeField][Tooltip("Minimum angle [degrees] of joystick rotation before an input is sent.")]
+    private float deadZone = 0.05f;
 
     private bool tracking = false;
     private Coroutine track;

@@ -2,18 +2,24 @@ using UnityEngine;
 using RosSharp.RosBridgeClient;
 using RosSharp.RosBridgeClient.Messages.Geometry;
 using System.Collections;
+using Microsoft.MixedReality.Toolkit.UI;
 
 public class CmdVelControl : MonoBehaviour {
     [SerializeField] private JoystickControl joystick;
     [SerializeField] private PurePursuit purePursuit;
     [SerializeField] private float linearSpeed = 1f, turnSpeed = 1f;
     [SerializeField] private bool usingTF = true, stopOnLoad = true;
+    [SerializeField] private Interactable turnCorrectToggle;
+    [SerializeField][Tooltip("How much to correct for IMU drift when turning [degrees of correction per degree turned]")]
+    private float turnCorrection = 0;
+    [SerializeField][Tooltip("Minimum change in angle [degrees] before Turn Tolerance applies")]
+    private float tolerance = 0.005f;
 
     public delegate void MsgReceived(float x, float z, float theta);
     public static event MsgReceived msgValueChanged;
 
     private string botCommandTopic;
-    private float x, z, theta, oldX, oldZ, oldTheta, forwardSpeed = 0, angularSpeed = 0;
+    private float x, z, theta, oldX, oldZ, oldTheta, dTheta = 0, forwardSpeed = 0, angularSpeed = 0;
     private bool isGrabbed = false, initialised = false, stop = true;
     private Twist twistMessage;
     private RosSocket rosSocket;
@@ -80,6 +86,10 @@ public class CmdVelControl : MonoBehaviour {
         if (initialised) {
             if (x != oldX || z != oldZ || theta != oldTheta) {
                 // Invoke pose updated event if the robot has moved
+                if (turnCorrectToggle.IsToggled) {
+                    dTheta = Mathf.Abs(theta - oldTheta);
+                    theta += (dTheta > tolerance ? (theta > oldTheta ? turnCorrection : -turnCorrection) : 0) * dTheta;
+                }
                 msgValueChanged?.Invoke(x, z, theta);
                 oldX = x;
                 oldZ = z;

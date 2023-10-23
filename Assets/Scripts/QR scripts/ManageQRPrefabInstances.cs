@@ -15,7 +15,7 @@ public class ManageQRPrefabInstances : MonoBehaviour {
 
 #if UNITY_EDITOR
         if (spawnOnLoad) {
-            Invoke(nameof(spawnMarker), 5f);
+            Invoke(nameof(spawnMarker), 4f);
         }
 #endif
     }

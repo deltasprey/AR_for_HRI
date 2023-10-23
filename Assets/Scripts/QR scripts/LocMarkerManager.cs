@@ -7,15 +7,12 @@ using QRTracking;
 using Microsoft.MixedReality.Toolkit.UI;
 
 public class LocMarkerManager : MonoBehaviour {
-    public Matrix4x4 rotationMatrix { get; private set; }
-    public Vector3 offset { get; private set; }
-    public float offsetTheta { get; private set; }
-    public bool isFocused { private get; set; } = true;
+    public Transform localiser;
 
     [SerializeField] private QRCode qr;
     [SerializeField] private GameObject simpleGUI;
     [SerializeField] private Material sphere;
-    [SerializeField] private Transform localiser, worldMarker, safetyZone, simpleSaveButton, complexSaveButton; 
+    [SerializeField] private Transform worldMarker, safetyZone, simpleSaveButton, complexSaveButton; 
     [SerializeField] private Slider simpleScaleSlider, complexScaleSlider, simpleSafetySlider, complexSafetySlider;
     [SerializeField] private TextMeshProUGUI simpleScaleSliderText, complexScaleSliderText, simpleSafetySliderText, complexSafetySliderText;
     [SerializeField] private TMP_Dropdown moveStep, rotateStep;
@@ -25,13 +22,14 @@ public class LocMarkerManager : MonoBehaviour {
     private Transform player, root;
     private CmdVelControl rosPose;
     private Coroutine aUp, aDown;
-    private Vector3 position;
+    private Matrix4x4 rotationMatrix;
+    private Vector3 position, offset;
     private Quaternion rotation;
     private readonly float[] moveAmounts = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.5f };
     private readonly uint[] rotateAmounts = { 1, 2, 5, 10, 15, 30, 45, 90 };
-    private float moveAmount, localiserScale, safetyScale;
+    private float moveAmount, localiserScale, safetyScale, offsetTheta = 0;
     private uint rotateAmount;
-    private bool started = false, trackScale = true, initialised = false, qrMoved = false;
+    private bool started = false, trackScale = true, initialised = false, qrMoved = false, isFocused = true;
 
     private void Start() {
         // Marker positioning initialisation
@@ -76,18 +74,6 @@ public class LocMarkerManager : MonoBehaviour {
             simpleSafetySliderText.text = safetyScale.ToString();
             complexSafetySliderText.text = safetyScale.ToString();
         }
-        
-        //if (track) {
-        //    if (!rotX.isFocused) {
-        //        rotX.text = localiser.eulerAngles.x.ToString("F3");
-        //    }
-        //    if (!rotY.isFocused) {
-        //        rotY.text = (localiser.eulerAngles.y - worldMarker.eulerAngles.y).ToString("F3");
-        //    }
-        //    if (!rotZ.isFocused) {
-        //        rotZ.text = localiser.eulerAngles.z.ToString("F3");
-        //    }
-        //}
 
         transform.position = new Vector3(worldMarker.position.x, (player.position.y + worldMarker.position.y)/2, worldMarker.position.z);
     }
@@ -100,6 +86,7 @@ public class LocMarkerManager : MonoBehaviour {
     private void OnDisable() {
         CmdVelControl.msgValueChanged -= moveMarker;
         try { QRCodesManager.Instance.QRCodeUpdated -= qrPositionMoved; } catch { }
+        try { FindObjectOfType<PurePursuit>().enabled = false; } catch { }
     }
 
 #region QR Updates
@@ -160,7 +147,10 @@ public class LocMarkerManager : MonoBehaviour {
         var (x, z, theta) = rosPose.initPos();
         if (theta != 404) {
             Quaternion botRot = Quaternion.Euler(0, localiser.rotation.eulerAngles.y, 0);
+
+            float oldOffTheta = offsetTheta;
             offsetTheta = localiser.rotation.eulerAngles.y - theta;
+            Debug.Log($"Old offset Theta = {oldOffTheta}, New offset Theta = {offsetTheta}, Difference = {oldOffTheta - offsetTheta}");
 
             rotationMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.Inverse(Quaternion.Euler(0, theta, 0)) * botRot, Vector3.one);
             offset = localiser.position - rotationMatrix.MultiplyPoint(new Vector3(x, 0, z));
@@ -231,6 +221,7 @@ public class LocMarkerManager : MonoBehaviour {
     public void sliderDeselect() { trackScale = true; }
 #endregion
 
+// Move the marker based on the buttons pressed on the Complex GUI
 #region Complex UI Button Callbacks
     public void changeMoveAmount() { moveAmount = moveAmounts[moveStep.value]; }
 

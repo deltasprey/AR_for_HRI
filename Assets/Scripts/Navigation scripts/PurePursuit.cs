@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Timeline;
 
 public class PurePursuit : MonoBehaviour {
     public bool navigating { get; private set; }
@@ -10,20 +9,16 @@ public class PurePursuit : MonoBehaviour {
     private LocMarkerManager markerManager;
     private TapToPlaceControllerEye navMarkers;
     private Coroutine driveCo;
-    private Vector3 rosTargetPos3D;
-    private Vector2 rosPos, rosTargetPos2D = Vector2.zero;
-    private float rosTheta, targetTheta, turnRate;
+    private Vector2 robotPos, targetPos2D = Vector2.zero;
+    private float robotTheta = 0, targetTheta = 0, angDiff = 0, turnRate = 0;
     private bool follow = false;
 
-    private void Start() {
-        markerManager = FindObjectOfType<LocMarkerManager>();
-        navMarkers = GetComponent<TapToPlaceControllerEye>();
-    }
+    private void Start() { navMarkers = GetComponent<TapToPlaceControllerEye>(); }
 
     private void OnEnable() {
+        markerManager = FindObjectOfType<LocMarkerManager>();
         SelfInteract.navigateToMe += navigate;
         SelfInteract.pathToMe += path;
-        CmdVelControl.msgValueChanged += rosUpdate;
         SpeechManager.stop += stopCmds;
         SpeechManager.AddListener("Follow Me", followMe);
     }
@@ -31,30 +26,26 @@ public class PurePursuit : MonoBehaviour {
     private void OnDisable() {
         SelfInteract.navigateToMe -= navigate;
         SelfInteract.pathToMe -= path;
-        CmdVelControl.msgValueChanged -= rosUpdate;
         SpeechManager.stop -= stopCmds;
         SpeechManager.RemoveListener("Follow Me", followMe);
     }
 
     private void Update() {
+        if (navigating) {
+            robotPos = new(markerManager.localiser.position.x, markerManager.localiser.position.z);
+            robotTheta = markerManager.localiser.eulerAngles.y > 180 ? markerManager.localiser.eulerAngles.y - 360 : markerManager.localiser.eulerAngles.y;
+        }
         if (follow) {
-            rosTargetPos3D = markerManager.rotationMatrix.inverse.MultiplyPoint(new Vector3(Camera.main.transform.position.x, 0, Camera.main.transform.position.z) - markerManager.offset);
-            rosTargetPos2D = new(rosTargetPos3D.z, rosTargetPos3D.x);
-            targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg; // Massively negative???
-            turnRate = (targetTheta - rosTheta) > 0 ? 0.6f : -0.6f;
+            targetPos2D = new(Camera.main.transform.position.x, Camera.main.transform.position.z);
+            targetTheta = Mathf.Atan2(targetPos2D.x - robotPos.x, targetPos2D.y - robotPos.y) * Mathf.Rad2Deg;
+            angDiff = targetTheta - robotTheta;
+            angDiff += (angDiff > 180) ? -360 : (angDiff < -180) ? 360 : 0;
+            turnRate = angDiff > 0 ? 0.6f : -0.6f;
             if (!navigating) {
                 driveCo = StartCoroutine(drive(turnRate, 0, 1));
                 navigating = true;
             }
         }
-    }
-
-    private void rosUpdate(float x, float z, float theta) {
-        rosPos = new Vector2(z, x);
-        rosTheta = theta;
-        rosTheta %= 360;
-        rosTheta = rosTheta > 180 ? rosTheta - 360 : rosTheta;
-        targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg;
     }
 
     private void stopCmds() {
@@ -69,38 +60,38 @@ public class PurePursuit : MonoBehaviour {
 
     private void navigate(SelfInteract marker) { initialisePursuit(marker, false); }
     
-    private void path(SelfInteract marker) { initialisePursuit(navMarkers.markers[0].GetComponent<SelfInteract>(), true); }
+    private void path(SelfInteract marker) { initialisePursuit(marker, true); }
 
     private void initialisePursuit(SelfInteract marker, bool pathing) {
         if (driveCo != null) StopCoroutine(driveCo);
-        rosTargetPos3D = markerManager.rotationMatrix.inverse.MultiplyPoint(new Vector3(marker.transform.position.x, 0, marker.transform.position.z) - markerManager.offset);
-        rosTargetPos2D = new(rosTargetPos3D.z, rosTargetPos3D.x);
-        //print($"rosPos = {rosPos} | rosTargetPos = {rosTargetPos2D} | Robot theta = {rosTheta}");
 
-        targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg;
-        print($"Target theta = {targetTheta}");
-        print($"Robot theta = {rosTheta}");
-
-        turnRate = (targetTheta - rosTheta) > 0 ? 0.6f : -0.6f;
-        navigating = true;
-
-        // Start driving
         int stopId = int.Parse(marker.label.text);
-        driveCo = StartCoroutine(drive(turnRate, pathing ? 0 : stopId - 1 , stopId));
+        if (pathing) marker = navMarkers.markers[0].GetComponent<SelfInteract>();
+        targetPos2D = new(marker.transform.position.x, marker.transform.position.z);
+        robotPos = new(markerManager.localiser.position.x, markerManager.localiser.position.z);
+        robotTheta = markerManager.localiser.eulerAngles.y > 180 ? markerManager.localiser.eulerAngles.y - 360 : markerManager.localiser.eulerAngles.y;
+        targetTheta = Mathf.Atan2(targetPos2D.x - robotPos.x, targetPos2D.y - robotPos.y) * Mathf.Rad2Deg;
+        angDiff = targetTheta - robotTheta;
+        angDiff += (angDiff > 180) ? -360 : (angDiff < -180) ? 360 : 0;
+        turnRate = angDiff > 0 ? 0.6f : -0.6f;
+        navigating = true;
+        driveCo = StartCoroutine(drive(turnRate, pathing ? 0 : stopId - 1 , stopId)); // Start driving
+        //print($"Target theta = {targetTheta}, Robot theta = {robotTheta}, Ang diff = {angDiff}, Turn rate = {turnRate}");
     }
-    
+
     IEnumerator drive(float turnRate, int startId, int stopId) {
+        //print($"Start ID = {startId}, Stop ID = {stopId}");
         for (int i = startId; i < stopId; i++) {
             // Perform inital turn
-            while (Mathf.Abs(targetTheta - rosTheta) > 3) {
+            while (Mathf.Abs(targetTheta - robotTheta) > 6) {
                 turn = turnRate;
                 yield return new WaitForSeconds(0.1f);
             }
             turn = 0;
 
             // Drive to location
-            while ((rosTargetPos2D - rosPos).magnitude > 0.1) {
-                turn = (targetTheta - rosTheta) / 50;
+            while ((targetPos2D - robotPos).magnitude > 0.15) {
+                turn = (targetTheta - robotTheta) / 50;
                 forward = 1;
                 yield return new WaitForSeconds(0.1f);
             }
@@ -109,12 +100,13 @@ public class PurePursuit : MonoBehaviour {
 
             // Switch to next waypoint
             if (i < stopId - 1) {
-                rosTargetPos2D = new(navMarkers.markers[i].transform.position.z, navMarkers.markers[i].transform.position.x);
-                targetTheta = Mathf.Atan2(rosTargetPos2D.y - rosPos.y, rosTargetPos2D.x - rosPos.x) * Mathf.Rad2Deg;
-                turnRate = (targetTheta - rosTheta) > 0 ? 0.6f : -0.6f;
+                targetPos2D = new(navMarkers.markers[i + 1].transform.position.z, navMarkers.markers[i + 1].transform.position.x);
+                targetTheta = Mathf.Atan2(targetPos2D.x - robotPos.x, targetPos2D.y - robotPos.y) * Mathf.Rad2Deg;
+                angDiff = targetTheta - robotTheta;
+                angDiff += (angDiff > 180) ? -360 : (angDiff < -180) ? 360 : 0;
+                turnRate = angDiff > 0 ? 0.6f : -0.6f;
             }
         }
-
         navigating = false;
         yield return null;
     }
