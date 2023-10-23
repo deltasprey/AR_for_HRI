@@ -52,24 +52,23 @@ Source: https://learn.microsoft.com/en-us/training/paths/beginner-hololens-2-tut
 
 ## Troubleshooting
 ### Deploy Failed on Visual Studio 
-This can occur after Visual Studio is updated, which causes it to lose the Machine Name configuration property. To fix, go to Project  Properties  Configuration Properties  Debugging and add the IP of the HoloLens back into the Machine Name field. 
-This can also occur if the Unity project is built on a previous version of Visual Studio and then a Deploy is attempted on a later version. To fix this, navigate to the folder where the Unity project was built and delete all the files there. Rebuild the Unity project and it should now be deployable. Make sure to have also followed the steps in the previous paragraph. 
+This can occur after Visual Studio is updated, which causes it to lose the Machine Name configuration property. To fix, go to **Project** -> **Properties** -> **Configuration Properties** -> **Debugging** and add the IP of the HoloLens back into the **Machine Name** field. 
+This can also occur if the Unity project is built on a previous version of Visual Studio and then a Deploy is attempted on a later version. To fix this, navigate to the folder where the Unity project was built and **delete** all the files there. **Rebuild** the Unity project and it should now be deployable. Make sure to have also followed the steps in the previous paragraph. 
  
 ### Visual Studio NuGet Package Restore Failed Unable to Find Version 
-Visual Studio doesn’t check the internet for NuGet packages by default which causes errors if the packages aren’t on your computer. To fix this in Visual Studio, go to Tools  Options  NuGet Package Manager  Packages Sources. Click the green plus button in the top right corner then enter the following into the fields. 
-Name: nuget.org 
-Source: https://www.nuget.org/api/v2/ 
-Press Update, then in NuGet Package Manager click on General  Clear All NuGet Storage. Press Ok and the project should now compile without errors. 
+Visual Studio doesn’t check the internet for NuGet packages by default which causes errors if the packages aren’t on your computer. To fix this in Visual Studio, go to **Tools** -> **Options** -> **NuGet Package Manager** -> **Packages Sources**. Click the green plus button in the top right corner then enter the following into the fields. 
+**Name:** nuget.org 
+**Source:** https://www.nuget.org/api/v2/ 
+Press **Update**, then in **NuGet Package Manager** click on **General** -> **Clear All NuGet Storage**. Press Ok and the project should now compile without errors. 
  
 ### Unity WSATestCertificate is Expired 
-Go to Edit  Project Settings  Player  Publishing Settings. Under Certificates click the button above Create and delete the WSATestCertificate.pfx file. Close the file explorer window and then click Create. Leave everything at default and create a new certificate. 
+Go to **Edit** -> **Project Settings** -> **Player** -> **Publishing Settings**. Under **Certificates** click the button above Create and delete the WSATestCertificate.pfx file. Close the file explorer window and then click **Create**. Leave everything at default and create a new certificate. 
  
 ### ROS# Project Newtonsoft.Json.dll Not Found Error 
 This can sometimes be fixed by closing and reopening the Unity project. When this isn’t the case, try installing NuGet by following the steps above. 
 
 ### Unity Event Callbacks Not Fully Executing 
-The most surefire way to solve this is to change the value of a private Boolean variable, which is checked by a conditional statement in Update(). The formerly blocking code will be successfully executed inside this conditional statement. Be sure to reset the Boolean variable at the end.
-
+The most surefire way to solve this is to change the value of a private Boolean variable, which is checked by a conditional statement in **Update()**. The formerly blocking code will be successfully executed inside this conditional statement. Be sure to reset the Boolean variable at the end.
 
 ## Credits
 Connection to the ROS websocket is provided by EricVoll's [UWP fork](https://github.com/ericvoll/ros-sharp/tree/UWP) of the [ROS# package](https://github.com/siemens/ros-sharp) by siemens. This fork allows this 
