@@ -2,7 +2,7 @@
 ## A Software Suite for the Control of Mobile Robots
 ### Author: Torsten Sprey
 ### Supervisor: Prof. Niko Suenderhauf
-*Add Image*
+![Display Image](https://github.com/deltasprey/AR_for_HRI/blob/master/Media/Display%20Image.png)
 
 ## About
 This capstone project aimed to enhance Human-Robot Interaction (HRI) using Augmented Reality (AR) technology. It focused on developing an AR-based software application to create user-friendly interfaces, improve safety, and increase efficiency in HRI. The objectives included enabling wireless bi-directional communication between AR devices and robots, translating human actions into robot commands with immediate feedback through AR, and providing comprehensive documentation for software operation and troubleshooting. This project embraced the potential of AR to revolutionise HRI by facilitating seamless collaboration between humans and robots.
