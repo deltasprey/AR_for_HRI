@@ -5,7 +5,21 @@
 *Add Image*
 
 ## About
-*To Do*
+This capstone project aimed to enhance Human-Robot Interaction (HRI) using Augmented Reality (AR) technology. It focused on developing an AR-based software application to create user-friendly interfaces, improve safety, and increase efficiency in HRI. The objectives included enabling wireless bi-directional communication between AR devices and robots, translating human actions into robot commands with immediate feedback through AR, and providing comprehensive documentation for software operation and troubleshooting. This project embraced the potential of AR to revolutionise HRI by facilitating seamless collaboration between humans and robots.
+
+This project was created in nine months as part of Queensland University of Technology's (QUT) EGH400 Research Project subject. Because of this, further work was required to create additional assessable content with the Author's time already split among this project and three other concurrent university subjects. Furthermore, the Author had only one month of experience in Unity and no experience with the Robot Operating System (ROS) middleware prior to this project's commencement. As a result, many of this project's features are unrefined, not optimised and occasionally exhibit unexpected behaviour. That said, with more time and help from the included documentation, this project could become a foundation or catalyst for an industry standard application that significantly improves Human-Robot Interaction.
+
+The application has the following features:
+* Wireless bi-directional communication between the HoloLens and robot.
+* Localisation of the robot in the HoloLens' world coordinate frame using a QR code.
+* A safety zone that stops the robot's movement if entered.
+* Manual control of the robot's movement.
+* Pure pursuit navigation to markers placed by the user. Options for this navigation are:
+  - Go to a single marker.
+  - Go to multiple markers in sequence.
+  - Follow the user.
+
+Usage of these feature is performed using combinations of hand tracking, gesture recognition, speech recognition and eye tracking.
 
 ## Installation Guide
 1.	Download the folder from the GitHub link above and the [Microsoft Mixed Reality Feature Tool](https://www.microsoft.com/en-us/download/details.aspx?id=102778).
@@ -71,11 +85,11 @@ This can sometimes be fixed by closing and reopening the Unity project. When thi
 The most surefire way to solve this is to change the value of a private Boolean variable, which is checked by a conditional statement in **Update()**. The formerly blocking code will be successfully executed inside this conditional statement. Be sure to reset the Boolean variable at the end.
 
 ## Credits
-Connection to the ROS websocket is provided by EricVoll's [UWP fork](https://github.com/ericvoll/ros-sharp/tree/UWP) of the [ROS# package](https://github.com/siemens/ros-sharp) by siemens. This fork allows this 
+Connection to the ROS WebSocket is provided by EricVoll's [UWP fork](https://github.com/ericvoll/ros-sharp/tree/UWP) of the [ROS# package](https://github.com/siemens/ros-sharp) by siemens. This fork allows this 
 project to be built to UWP devices such as the Microsoft HoloLens 2 augmented reality headset (although it won't really work since that device has no keyboard).
 
 Many of the scripts for tracking QR codes were provided by [Microsoft's QR code tracking sample](https://github.com/chgatla-microsoft/QRTracking).
 
-Marker placement for the navigation system was adapated from this [article[(https://localjoost.github.io/migrating-to-mrtk2interacting-with/) by Joost van Schaik. Included was this GitHub [demo project](https://github.com/LocalJoost/SpatialMapInteraction) containing scripts used in this project.
+Marker placement for the navigation system was adapted from this [article[(https://localjoost.github.io/migrating-to-mrtk2interacting-with/) by Joost van Schaik. Included was this GitHub [demo project](https://github.com/LocalJoost/SpatialMapInteraction) containing scripts used in this project.
 
 Special thanks to Harry Stone (former QUT student who worked on this project in 2022) for providing many of the resources to get this project started.
